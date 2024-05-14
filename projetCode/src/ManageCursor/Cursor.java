@@ -138,4 +138,9 @@ public class Cursor {
     public void setColor(Color color) {
         this.color = color;
     }
+        @Override
+    public String toString() {
+        return String.format("Cursor[positionX=%d, positionY=%d, angle=%.2f, id=%d, thickness=%.2f, hidden=%b, color=%s]",
+                positionX, positionY, angle, id, thickness, hidden, color);
+    }
 }
