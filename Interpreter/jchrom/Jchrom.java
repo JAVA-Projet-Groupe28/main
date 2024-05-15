@@ -1,4 +1,4 @@
-package jchrom;
+package projetgl.chromatynk.Interpreter.jchrom;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.List;
 //import java.util.Scanner;
 
-import jchrom.Scanner;
+import projetgl.chromatynk.Interpreter.jchrom.Scanner;
 
 public class Jchrom {
     static boolean hadError = false;

@@ -1,11 +1,11 @@
-package jchrom;
+package projetgl.chromatynk.Interpreter.jchrom;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static jchrom.TokenType.*;
+import static projetgl.chromatynk.Interpreter.jchrom.TokenType.*;
 
 /**
  * Scanner class : store the row source code in a string,
@@ -17,7 +17,7 @@ import static jchrom.TokenType.*;
  */
 class Scanner {
     private final String source;
-    private final List<Token> tokens = new ArrayList<>();
+    private final List<projetgl.chromatynk.Interpreter.jchrom.Token> tokens = new ArrayList<>();
     private int start = 0;
     private int current = 0;
     private int line = 1;
@@ -91,6 +91,40 @@ class Scanner {
             case '%':
                 addToken(PERCENT);
                 break;
+                // Operators
+            case '!':
+                addToken(match('=') ? BANG_EQUAL : BANG);
+                break;
+            case '=':
+                addToken(match('=') ? EQUAL_EQUAL : EQUAL);
+                break;
+            case '<':
+                addToken(match('=') ? LESS_EQUAL : LESS);
+                break;
+            case '>':
+                addToken(match('=') ? GREATER_EQUAL : GREATER);
+                break;
+            case '/':
+                if (match('/')) {
+                    // A comment goes until the end of the line.
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                } else {
+                    addToken(SLASH);
+                }
+                break;
+            case ' ':
+            case '\r':
+            case '\t':
+                // Ignore whitespace.
+                break;
+            case '\n':
+                line++;
+                break;
+            case '"': string(); break;
+
+
+
+
 
 
 
@@ -121,6 +155,34 @@ class Scanner {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }
+
+    /**
+     * Look at the next character if its match the lexeme/switch statement.
+     *
+     * @param expected char
+     * @return bool
+     */
+    private boolean match(char expected) {
+        if (isAtEnd()) return false;
+        if (source.charAt(current) != expected) return false;
+
+        current++;
+        return true;
+    }
+
+    /**
+     * Similar to advance() but if it goes until it's the end of the line.
+     * @return str
+     */
+    private char peek() {
+        if (isAtEnd()) return '\0';
+        return source.charAt(current);
+    }
+
+
+
+
+
 
 
 

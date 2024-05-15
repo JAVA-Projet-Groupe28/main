@@ -1,4 +1,5 @@
-package jchrom;
+package projetgl.chromatynk.Interpreter.jchrom;
+
 
 //Enumeration of all the tokens in the language
 enum TokenType {
