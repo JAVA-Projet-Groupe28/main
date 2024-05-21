@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane alignment="center" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.example.appproject.Interface">
+
+    <!-- Drawing Pane -->
+    <Pane fx:id="drawingPane" minHeight="300" minWidth="300" style="-fx-background-color: blue;" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0" />
+
+    <!-- Cursor Pane -->
+    <Pane fx:id="cursorPane" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+
+    <!-- Interactive Pane -->
+    <GridPane hgap="10" vgap="10" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2">
+        <TextField fx:id="posXField" promptText="Position X" />
+        <TextField fx:id="posYField" promptText="Position Y" />
+        <TextField fx:id="angleField" promptText="Angle" />
+        <TextField fx:id="thicknessField" promptText="Épaisseur" />
+        <TextField fx:id="redField" promptText="Rouge (0-255)" />
+        <TextField fx:id="greenField" promptText="Vert (0-255)" />
+        <TextField fx:id="blueField" promptText="Bleu (0-255)" />
+        <Button onAction="#createCursorButtonClicked" text="Créer Curseur" />
+      <columnConstraints>
+         <ColumnConstraints />
+      </columnConstraints>
+      <rowConstraints>
+         <RowConstraints />
+      </rowConstraints>
+
+        <!-- Other UI elements can be added here -->
+    </GridPane>
+
+    <!-- ListView for Cursors -->
+    <ListView fx:id="cursorListView" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+
+    <!-- Buttons -->
+    <Button onAction="#saveButtonClicked" text="Save" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+    <Button onAction="#deleteCursorsButtonClicked" text="Supprimer tous les curseurs" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+    <Button onAction="#forwardButtonClicked" text="Forward" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+    <TextField fx:id="distanceField" promptText="Distance" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+   <columnConstraints>
+      <ColumnConstraints />
+      <ColumnConstraints />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints maxHeight="294.0" minHeight="269.0" prefHeight="293.0" />
+      <RowConstraints maxHeight="56.0" minHeight="31.0" prefHeight="32.0" />
+      <RowConstraints />
+      <RowConstraints />
+   </rowConstraints>
+
+</GridPane>
