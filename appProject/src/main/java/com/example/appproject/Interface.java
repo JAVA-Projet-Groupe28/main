@@ -56,7 +56,12 @@ public class Interface extends Application {
         primaryStage.setTitle("Dessin de Lignes avec Rectangle Dynamique");
         primaryStage.show();
     }
-
+    public int getSelectedCursorId() {
+        return selectedCursorId;
+    }
+    public Cursor getselectedCursor(){
+        return mapCursor.getCursorById(getSelectedCursorId());
+    }
     @FXML
     protected void initialize() {
         cursorListView.setOnMouseClicked(event -> {
@@ -238,6 +243,13 @@ public class Interface extends Application {
     protected void checkLinePosition(double startX, double startY, double endX, double endY) throws OutOfPositionException {
         checkPosition(startX, startY);
         checkPosition(endX, endY);
+    }
+
+    public double getDrawingPaneWidth(){
+        return drawingPane.getWidth();
+    }
+    public double getDrawingPaneHeight(){
+        return drawingPane.getHeight();
     }
 
     public static void main(String[] args) {

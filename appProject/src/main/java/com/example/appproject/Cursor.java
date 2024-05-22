@@ -19,12 +19,12 @@ public class Cursor {
     public Cursor(int id) {
         this.id = id;
 
-        this.positionX = 0;
-        this.positionY = 0;
+        this.positionX = 500;
+        this.positionY = 200;
         this.direction = 0;
         this.thickness = 3;
         this.opacity = 1;
-        this.hidden = false;
+        this.hidden = true;
         this.color = new Colorj(0,0,0);
     }
     public Cursor(int positionX, int positionY, float direction, int id, double thickness, boolean hidden, Colorj color, double opacity) {
