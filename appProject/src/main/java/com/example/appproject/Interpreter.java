@@ -15,10 +15,6 @@ import java.util.Set;
  *
  */
 
-/*
-int accolades = 1;
-if (tokens[x] == "{"){accolades++}
- */
 public class Interpreter {
     private static Set<String> existingVariables = new HashSet<>();
 
@@ -371,7 +367,10 @@ public class Interpreter {
         }
     }
 
+    private static void splitCommand(String instruction){
+        if (instruction.contains("{")){
 
-
+    }
+    }
 
 }

@@ -2,6 +2,11 @@ package com.example.appproject;
 
 import java.util.Objects;
 
+/**
+ * The Cursor Class contains the attributes used to describe a Cursor (drawing pen) and the methods used in the
+ * Interpreter Class to execute the user's instructions.
+ */
+
 public class Cursor {
 
     int positionX;
@@ -15,7 +20,11 @@ public class Cursor {
     boolean hidden;
     Colorj color;
 
-    //This constructor method creates a cursor with preset attributes
+    /**
+     * This constructor method creates a cursor with preset attributes
+     * @param id The id of the cursor used as a Key in MapCursor Objects.
+     */
+
     public Cursor(int id) {
         this.id = id;
 
@@ -38,26 +47,45 @@ public class Cursor {
         this.color = color;
     }
 
-    //**
-    // The position method is used to implement the POS instruction and MOV instruction,
-    // When POS is called the position method is used, but when MOV is called a lign is
-    // drawn between the last position and the new one.
-    // */
+    /**
+     * The position method is used to implement the POS instruction and MOV instruction.
+     * When POS is called the position method is used, but when MOV is called a lign is
+     * drawn between the last position and the new one.
+     */
     public void position(int positionX,int positionY){
         setPositionX(positionX);
         setPositionY(positionY);
     }
 
+    /**
+     * The POS and MOV methods can be used with percentages of the dimensions of the canvas.
+     * per_x and per_y are Percentage objects which ensure that their value is between 0 and 1.
+     * @param per_x Position X on the abscissa in percentage of the width of the canvas.
+     * @param per_y Position Y on the ordinate in percentage of the height of the canvas.
+     * @param dimensionX Width of the canvas.
+     * @param dimensionY Height of the canvas.
+     */
     public void position(Percentage per_x, Percentage per_y, int dimensionX, int dimensionY){
         setPositionX((int) Math.floor(per_x.getValue()*dimensionX));
         setPositionY((int) Math.floor(per_y.getValue()*dimensionY));
     }
 
+    /**
+     * The forward method move the cursor by "distance" pixels, following the direction it is headed on, which is
+     * the "direction" angle from the abscissa.
+     * @param distance
+     */
     public void forward(int distance){
         this.positionX += distance*Math.cos(Math.toRadians(direction));
         this.positionY += distance*Math.sin(Math.toRadians(direction));
     }
 
+    /**
+     *
+     * @param value As the "distance" attribute but based of a percentage of the dimension of the canvas.
+     * @param dimension The dimension linked to the canvas from which we want the percentage value to be
+     *                  related to.
+     */
     public void forward(Percentage value, int dimension){
         int distance = (int) Math.floor(value.getValue()*dimension);
         this.positionX += distance*Math.cos(Math.toRadians(direction));
@@ -74,14 +102,20 @@ public class Cursor {
         positionY -= distance * Math.sin(Math.toRadians(direction));
     }
 
-    //**
-    // The direction is supposed to be in degrees, between 0 and 359, the setDirection method assures that it is the case.
-    // The parameter "angle" could be a positive as well as a negative value in degrees.
-    // */
+    /**
+     *  Turn the cursor by "angle" degrees, rotating counter clock-wise.
+     * The direction is supposed to be in degrees, between 0 and 359, the setDirection method assures that it is the case.
+     * The parameter "angle" could be a positive as well as a negative value in degrees.
+     */
     public void turn(double angle){
         setDirection(getDirection() + angle);
     }
 
+    /**
+     *  The lookat method turns the cursor so it points to the wanted position.
+     * @param lookAt_x
+     * @param lookAt_y
+     */
     public void lookAt(int lookAt_x, int lookAt_y){
         double u = Math.abs(lookAt_x - getPositionX());
         double v = Math.abs(lookAt_y - getPositionY());
@@ -95,6 +129,10 @@ public class Cursor {
         }
     }
 
+    /**
+     * Turns the cursor to point at the "modelCursor".
+     * @param modelCursor The cursor to point at.
+     */
     public void lookAt(Cursor modelCursor){
         lookAt(modelCursor.getPositionX(), modelCursor.getPositionY());
     }
@@ -133,7 +171,9 @@ public class Cursor {
         return direction;
     }
 
-    //The angle from the abscissa is supposed to be in degrees from 0 to 359
+    /**
+     * The method checks if the angle from the abscissa is in degrees from 0 to 359, and sets the new value.
+     */
     public void setDirection(double direction) {
         this.direction = direction % 360;
     }
@@ -177,7 +217,7 @@ public class Cursor {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Cursor cursor = (Cursor) obj;
-        return id == cursor.id; // Supposons que l'ID soit unique pour chaque curseur
+        return id == cursor.id; // It is supposed that the id is unique for each cursor.
     }
 
     @Override

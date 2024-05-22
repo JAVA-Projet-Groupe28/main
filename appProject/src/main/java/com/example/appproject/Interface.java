@@ -21,6 +21,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * The Interface class is the main class of the program, it manages the canvas (drawing area), visible by the user.
+ */
 public class Interface extends Application {
 
     Interpreter interpreter;
@@ -44,8 +47,13 @@ public class Interface extends Application {
     protected int selectedCursorId = -1;
     Screen screen = Screen.getPrimary();
 
-    // Obtenir la largeur et la hauteur de l'écran principal
+    /**
+     * The width of the canvas.
+     */
     double screenWidth = screen.getBounds().getWidth();
+    /**
+     * The height of the canvas.
+     */
     double screenHeight = screen.getBounds().getHeight();
 
     @Override
@@ -72,6 +80,9 @@ public class Interface extends Application {
         });
     }
 
+    /**
+     * The method manages a Button for the user to add cursor.
+     */
     @FXML
     protected void createCursorButtonClicked() {
         try {
@@ -99,6 +110,9 @@ public class Interface extends Application {
         }
     }
 
+    /**
+     * The method manages a Button for the user to delete the selected cursor.
+     */
     @FXML
     protected void deleteCursorsButtonClicked() {
         cursorPane.getChildren().clear();
@@ -129,6 +143,11 @@ public class Interface extends Application {
         }
     }
 
+    /**
+     * The method manages a Button for the user to save the drawing contained in the canvas.
+     * The cursors are not visible in the picture.
+     * The picture's format is PNG.
+     */
     @FXML
     protected void saveAsPngButtonClicked() {
         FileChooser fileChooser = new FileChooser();
@@ -146,6 +165,10 @@ public class Interface extends Application {
         }
     }
 
+    /**
+     * The method is used to represent the cursor on the drawing area interface.
+     * @param cursor
+     */
     protected void drawCursor(Cursor cursor) {
         if (cursor.isVisible()) {
             double cursorSize = 10;
@@ -176,6 +199,10 @@ public class Interface extends Application {
         }
     }
 
+    /**
+     * Erase the old cursor representation and redraw it at the new position.
+     * @param cursor
+     */
     protected void moveCursor(Cursor cursor) {
         // Remove old cursor visual representation
         cursorPane.getChildren().remove(cursor.getId() - 1);
@@ -188,6 +215,10 @@ public class Interface extends Application {
         drawCursor(cursor);
     }
 
+    /**
+     * Remove the selected cursor from the mapCursor Map.
+     * @param cursorToRemove
+     */
     protected void removeCursor(Cursor cursorToRemove) {
         for (Map.Entry<Integer, Cursor> entry : mapCursor.getCursors().entrySet()) {
             int cursorId = entry.getKey();
@@ -201,6 +232,9 @@ public class Interface extends Application {
         }
     }
 
+    /**
+     * Draws a line from a position to another, with the specified color and width.
+     */
     protected void drawLine(double startX, double startY, double endX, double endY, double stroke, int r, int g, int b) {
         try {
             checkLinePosition(startX, startY, endX, endY);
@@ -229,6 +263,12 @@ public class Interface extends Application {
                 (int) (color.getBlue() * 255));
     }
 
+    /**
+     * Checks if the position is in or out of the canvas' dimentions.
+     * @param x
+     * @param y
+     * @throws OutOfPositionException
+     */
     protected void checkPosition(double x, double y) throws OutOfPositionException {
         if (x < 0 || x > drawingPane.getWidth() || y < 0 || y > drawingPane.getHeight()) {
             throw new OutOfPositionException("Error: Position out of Pane");
