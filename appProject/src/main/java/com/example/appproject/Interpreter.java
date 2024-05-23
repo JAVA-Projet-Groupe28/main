@@ -1,6 +1,8 @@
 package com.example.appproject;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -18,70 +20,70 @@ import java.util.Set;
 public class Interpreter {
     private static Set<String> existingVariables = new HashSet<>();
 
-    public static void interpret(String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
+    public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
         try {
-
-
-
-            String[] tokens = instruction.split(" ");
-            switch (tokens[0]) {
-                case "FWD":
-                    executeFwd(tokens, interfaceInstance, cursor);
-                    System.out.println("FWD "+tokens[1]);
-                    break;
-                case "BWD":
-                    executeBwd(tokens, interfaceInstance, cursor);
-                    break;
-                case "TURN":
-                    cursor.turn(Double.parseDouble(tokens[1]));
-                    interfaceInstance.moveCursor(cursor);
-                    break;
-                case "COLOR":
-                    applyColor(tokens,interfaceInstance, cursor);
-                    break;
-                case "THICK":
-                    cursor.setThickness(Double.parseDouble(tokens[1]));
-                    break;
-                case "PRESS":
-                    cursor.setOpacity(Double.parseDouble(tokens[1]));
-                    break;
-                case "MOV":
-                    executeMove(tokens, interfaceInstance, cursor);
-                    break;
-                case "POS":
-                    executePos(tokens, interfaceInstance, cursor);
-                    break;
-                case "LOOKAT":
-                    System.out.println("lookat command" + tokens[0] + tokens[1]);
-                    executeLookAt(tokens, interfaceInstance, cursors, cursor);
-                    break;
-                case "HIDE":
-                    cursor.setHidden(false);
-                    interfaceInstance.moveCursor(cursor);
-                    break;
-                case "SHOW":
-                    cursor.setHidden(true);
-                    interfaceInstance.drawCursor(cursor);
-                    break;
-                case "CURSOR":
-                    executeCursor(tokens, interfaceInstance, cursors);
-                    break;
-                case "SELECT":
-                    cursor = cursors.getCursorById(Integer.parseInt(tokens[1]));
-                    interfaceInstance.selectedCursorId = Integer.parseInt((tokens[1]));
-                    break;
-                case "REMOVE":
-                    interfaceInstance.removeCursor(cursor);
-                    break;
-                case "FOR":
-                    handleForLoop(tokens, instruction, interfaceInstance, cursors, cursor);
-                    break;
-                case "IF" :
-                    executeIf(tokens, instruction, interfaceInstance, cursors, cursor);
-                case "WHILE" :
-                    executeWhile(tokens, instruction, interfaceInstance, cursors, cursor);
-                default:
-                    throw new IllegalArgumentException("Unknown command: " + tokens[0]);
+            List<String> instructions = splitCommand(input);
+            for (String instruction : instructions) {
+                String[] tokens = instruction.split(" ");
+                switch (tokens[0]) {
+                    case "FWD":
+                        executeFwd(tokens, interfaceInstance, cursor);
+                        System.out.println("FWD " + tokens[1]);
+                        break;
+                    case "BWD":
+                        executeBwd(tokens, interfaceInstance, cursor);
+                        break;
+                    case "TURN":
+                        cursor.turn(Double.parseDouble(tokens[1]));
+                        interfaceInstance.moveCursor(cursor);
+                        break;
+                    case "COLOR":
+                        applyColor(tokens, interfaceInstance, cursor);
+                        break;
+                    case "THICK":
+                        cursor.setThickness(Double.parseDouble(tokens[1]));
+                        break;
+                    case "PRESS":
+                        cursor.setOpacity(Double.parseDouble(tokens[1]));
+                        break;
+                    case "MOV":
+                        executeMove(tokens, interfaceInstance, cursor);
+                        break;
+                    case "POS":
+                        executePos(tokens, interfaceInstance, cursor);
+                        break;
+                    case "LOOKAT":
+                        System.out.println("lookat command" + tokens[0] + tokens[1]);
+                        executeLookAt(tokens, interfaceInstance, cursors, cursor);
+                        break;
+                    case "HIDE":
+                        cursor.setHidden(false);
+                        interfaceInstance.moveCursor(cursor);
+                        break;
+                    case "SHOW":
+                        cursor.setHidden(true);
+                        interfaceInstance.drawCursor(cursor);
+                        break;
+                    case "CURSOR":
+                        executeCursor(tokens, interfaceInstance, cursors);
+                        break;
+                    case "SELECT":
+                        cursor = cursors.getCursorById(Integer.parseInt(tokens[1]));
+                        interfaceInstance.selectedCursorId = Integer.parseInt((tokens[1]));
+                        break;
+                    case "REMOVE":
+                        interfaceInstance.removeCursor(cursor);
+                        break;
+                    case "FOR":
+                        handleForLoop(tokens, instruction, interfaceInstance, cursors, cursor);
+                        break;
+                    case "IF":
+                        executeIf(tokens, instruction, interfaceInstance, cursors, cursor);
+                    case "WHILE":
+                        executeWhile(tokens, instruction, interfaceInstance, cursors, cursor);
+                    default:
+                        throw new IllegalArgumentException("Unknown command: " + tokens[0]);
+                }
             }
         } catch (IllegalArgumentException e) {
             throw e;
@@ -276,7 +278,7 @@ public class Interpreter {
     }
 
     private static void handleForLoop(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
-        if (tokens.length < 5) {
+        if (tokens.length < 3) {
             interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
             return;
         }
@@ -295,19 +297,32 @@ public class Interpreter {
         if (tokens[currentIndex].equals("FROM")) {
             from = Integer.parseInt(tokens[++currentIndex]);
             currentIndex++;
+
+
+            if (!tokens[currentIndex].equals("TO") || !tokens[currentIndex + 2].equals("STEP")) {
+                interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
+                return;
+            }
+            to = Integer.parseInt(tokens[++currentIndex]);
+            currentIndex++;
+            step = Integer.parseInt(tokens[++currentIndex]);
+            currentIndex++;
+        }
+        else{
+            if (!tokens[currentIndex].equals("TO")){
+                interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n"+tokens[currentIndex]);
+                return;
+            }
+            to = Integer.parseInt(tokens[++currentIndex]);
+            currentIndex++;
         }
 
-        if (!tokens[currentIndex].equals("TO")) {
-            interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
-            return;
-        }
 
-        to = Integer.parseInt(tokens[++currentIndex]);
-        currentIndex++;
+        System.out.println(tokens[currentIndex] +"//"+currentIndex);
+        if (tokens[currentIndex].startsWith("{")) {
 
-        if (tokens[currentIndex].startsWith("STEP{")) {
-            String stepBlock = instruction.substring(instruction.indexOf("STEP{") + 5, instruction.lastIndexOf("}"));
-            String[] commands = stepBlock.split(",");
+            String stepBlock = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
+            List<String> commands = splitCommand(stepBlock);
             existingVariables.add(variableName);
 
             for (int i = from; i <= to; i += step) {
@@ -320,7 +335,7 @@ public class Interpreter {
 
             existingVariables.remove(variableName);
         } else {
-            interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
+            interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax c la d\n");
         }
     }
 
@@ -332,7 +347,7 @@ public class Interpreter {
         String condition = instruction.substring(instruction.indexOf("IF") + 3, instruction.indexOf('{')).trim();
         String block = instruction.substring(instruction.indexOf("{")+1, instruction.lastIndexOf("}")).trim();
         if (evaluateBooleanExpression(condition)){
-            String[] commands = block.split(",");
+            List<String> commands = splitCommand(block);
             for (String command : commands){
                 interpret(command, interfaceInstance, cursors, cursor);
             }
@@ -429,17 +444,37 @@ public class Interpreter {
         String condition = instruction.substring(instruction.indexOf("WHILE") + 3, instruction.indexOf('{')).trim();
         String block = instruction.substring(instruction.indexOf("{")+1, instruction.lastIndexOf("}")).trim();
         while (evaluateBooleanExpression(condition)){
-            String[] commands = block.split(",");
+            List<String> commands = splitCommand(block);
             for (String command : commands){
                 interpret(command, interfaceInstance, cursors, cursor);
             }
         }
     }
 
-    private static void splitCommand(String instruction){
-        if (instruction.contains("{")){
+    private static List<String> splitCommand(String instruction){
+        List<String> intsructionSplit = new ArrayList<>();
+        StringBuilder tokens = new StringBuilder();
+        int count =0;
+        for (int i = 0; i<instruction.length();i++){
+            char character = instruction.charAt(i);
+            if (character=='{'){
+                count++;
+            } else if (character=='}') {
+                count--;
+            }
 
-    }
+            if ((character==';')&&(count==0)){
+                intsructionSplit.add(tokens.toString().trim());
+                tokens.setLength(0);
+            }
+            else {
+                tokens.append(character);
+            }
+        }
+        if(tokens.length()>0){
+            intsructionSplit.add(tokens.toString().trim());
+        }
+        return intsructionSplit;
     }
 
 }
