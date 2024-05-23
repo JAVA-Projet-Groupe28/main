@@ -40,6 +40,9 @@ public class Interpreter {
                     cursor.color.setRgb(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]));
                     interfaceInstance.moveCursor(cursor);
                     break;
+                case "LOOKAT":
+                    executeLookAt(tokens, interfaceInstance, cursors, cursor);
+                    break;
                 case "THICK":
                     cursor.setThickness(Double.parseDouble(tokens[1]));
                     break;
@@ -188,6 +191,38 @@ public class Interpreter {
 
             interfaceInstance.drawLine(tempX, tempY, cursor.getPositionX(), cursor.getPositionY(), cursor.getThickness(), cursor.getColorj()[0], cursor.getColorj()[1], cursor.getColorj()[2]);
         }
+    }
+
+    /**
+     * Manages the LOOKAT instructions which can be called with different parameters.
+     * The coordinates as integers, a cursor ID as an integer or percentages in abscissa and ordinate of the canvas.
+     * */
+
+    private static void executeLookAt(String[] tokens, Interface interfaceInstance, MapCursor mapCursor, Cursor cursor){
+        if (tokens.length == 2){
+            Cursor cursorToLookAt = mapCursor.getCursorById(Integer.parseInt(tokens[1]));
+
+            cursor.lookAt(cursorToLookAt);
+        }
+        else if (tokens.length == 3){
+            if (tokens[1].endsWith("%") && tokens[2].endsWith("%")){
+                double canvasHeight = interfaceInstance.getDrawingPaneHeight();
+                double canvasWidth = interfaceInstance.getDrawingPaneWidth();
+                Percentage abscissa_per = new Percentage(tokens[1]);
+                Percentage ordinate_per = new Percentage(tokens[2]);
+
+                cursor.lookAt(abscissa_per,ordinate_per,canvasWidth,canvasHeight);
+            }
+            else {
+                int posX = Integer.parseInt(tokens[1]);
+                int posY = Integer.parseInt(tokens[2]);
+
+                cursor.lookAt(posX,posY);
+            }
+        }
+
+        interfaceInstance.moveCursor(cursor);
+
     }
 
     private static void executeCursor(String[] tokens, Interface interfaceInstance, MapCursor cursors) {
