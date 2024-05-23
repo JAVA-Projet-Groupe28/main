@@ -49,7 +49,7 @@ public class Interpreter {
                 case "PRESS":
                     cursor.setOpacity(Double.parseDouble(tokens[1]));
                     break;
-                case "MOVE":
+                case "MOV":
                     executeMove(tokens, interfaceInstance, cursor);
                     break;
                 case "POS":
@@ -206,8 +206,9 @@ public class Interpreter {
         }
         else if (tokens.length == 3){
             if (tokens[1].endsWith("%") && tokens[2].endsWith("%")){
-                double canvasHeight = interfaceInstance.getDrawingPaneHeight();
                 double canvasWidth = interfaceInstance.getDrawingPaneWidth();
+                double canvasHeight = interfaceInstance.getDrawingPaneHeight();
+                
                 Percentage abscissa_per = new Percentage(tokens[1]);
                 Percentage ordinate_per = new Percentage(tokens[2]);
 
