@@ -137,9 +137,9 @@ public class Cursor {
         lookAt(modelCursor.getPositionX(), modelCursor.getPositionY());
     }
 
-    public void lookAt(Percentage per_x, Percentage per_y, int dimensionX, int dimensionY){
-        int lookAt_x = (int) Math.floor(per_x.getValue()*dimensionX);
-        int lookAt_y = (int) Math.floor(per_y.getValue()*dimensionY);
+    public void lookAt(Percentage per_x, Percentage per_y, int width, int height){
+        int lookAt_x = (int) Math.floor(per_x.getValue()*width);
+        int lookAt_y = (int) Math.floor(per_y.getValue()*height);
         lookAt(lookAt_x,lookAt_y);
     }
 
