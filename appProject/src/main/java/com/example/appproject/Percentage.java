@@ -2,6 +2,8 @@ package com.example.appproject;
 /*import Exception.IncorrectPercentageException;*/
 public class Percentage
 {
+    //TODO : documentation
+
     double value;
 
     public Percentage(double value) /*throws IncorrectPercentageException */{

@@ -1,5 +1,7 @@
 package com.example.appproject;
 
+import javafx.fxml.FXML;
+
 import java.util.Objects;
 
 /**
@@ -8,6 +10,8 @@ import java.util.Objects;
  */
 
 public class Cursor {
+
+    //TODO : documentation
 
     int positionX;
     int positionY;
@@ -19,6 +23,7 @@ public class Cursor {
     double opacity;
     boolean hidden;
     Colorj color;
+
 
     /**
      * This constructor method creates a cursor with preset attributes
@@ -47,12 +52,22 @@ public class Cursor {
         this.color = color;
     }
 
+    public void duplicate(Cursor modelCursor){
+        this.positionX = modelCursor.getPositionX();
+        this.positionY = modelCursor.getPositionY();
+        this.direction = modelCursor.getDirection();
+        this.thickness = modelCursor.getThickness();
+        this.opacity = modelCursor.getOpacity();
+        this.hidden = modelCursor.hidden;
+        this.color = modelCursor.getColorj();
+    }
+
     /**
      * The position method is used to implement the POS instruction and MOV instruction.
      * When POS is called the position method is used, but when MOV is called a lign is
      * drawn between the last position and the new one.
      */
-    public void position(int positionX,int positionY){
+    public void position(int positionX,int positionY) throws OutOfPositionException {
         setPositionX(positionX);
         setPositionY(positionY);
     }
@@ -65,7 +80,7 @@ public class Cursor {
      * @param dimensionX Width of the canvas.
      * @param dimensionY Height of the canvas.
      */
-    public void position(Percentage per_x, Percentage per_y, int dimensionX, int dimensionY){
+    public void position(Percentage per_x, Percentage per_y, int dimensionX, int dimensionY) throws OutOfPositionException {
         setPositionX((int) Math.floor(per_x.getValue()*dimensionX));
         setPositionY((int) Math.floor(per_y.getValue()*dimensionY));
     }
@@ -75,7 +90,7 @@ public class Cursor {
      * the "direction" angle from the abscissa.
      * @param distance
      */
-    public void forward(int distance){
+    public void forward(int distance) throws OutOfPositionException {
         this.positionX += distance*Math.cos(Math.toRadians(direction));
         this.positionY += distance*Math.sin(Math.toRadians(direction));
     }
@@ -86,17 +101,20 @@ public class Cursor {
      * @param dimension The dimension linked to the canvas from which we want the percentage value to be
      *                  related to.
      */
-    public void forward(Percentage value, int dimension){
-        int distance = (int) Math.floor(value.getValue()*dimension);
-        this.positionX += distance*Math.cos(Math.toRadians(direction));
-        this.positionY += distance*Math.sin(Math.toRadians(direction));
+    public void forward(Percentage value, int dimension) throws OutOfPositionException {
+        int distance = (int) Math.floor(value.getValue() * dimension);
+
+        this.positionX += distance * Math.cos(Math.toRadians(direction));
+        this.positionY += distance * Math.sin(Math.toRadians(direction));
+        throw new OutOfPositionException("Warning : cursor is out of bounds");
+
     }
 
-    public void backward(int value){
+    public void backward(int value) throws OutOfPositionException {
         forward(-value);
     }
 
-    public void backward(Percentage value, int dimension) {
+    public void backward(Percentage value, int dimension) throws OutOfPositionException {
         int distance = (int) Math.floor(value.getValue() * dimension);
         positionX -= distance * Math.cos(Math.toRadians(direction));
         positionY -= distance * Math.sin(Math.toRadians(direction));
@@ -156,7 +174,7 @@ public class Cursor {
         return positionX;
     }
 
-    public void setPositionX(int positionX) {
+    public void setPositionX(int positionX) throws OutOfPositionException {
         this.positionX = positionX;
     }
 
@@ -164,7 +182,7 @@ public class Cursor {
         return positionY;
     }
 
-    public void setPositionY(int positionY) {
+    public void setPositionY(int positionY) throws OutOfPositionException {
         this.positionY = positionY;
     }
 
@@ -204,8 +222,8 @@ public class Cursor {
         this.hidden = hidden;
     }
 
-    public int[] getColorj() {
-        return this.color.getRgb();
+    public Colorj getColorj() {
+        return this.color;
     }
 
     public void setColor(String webColor){
@@ -222,8 +240,8 @@ public class Cursor {
 
     @Override
     public String toString() {
-        return String.format("Cursor[positionX=%d, positionY=%d, angle=%.2f, id=%d, thickness=%.2f, hidden=%b,"+this.color.toString()+"]",
-                positionX, positionY, direction, id, thickness, hidden, color);
+        return String.format("Cursor %d  X:%d Y:%d hidden=%b dir:%.2f thick:%.2f Press:%.2f,"+this.color.toString(),
+                id,positionX, positionY,hidden, direction,  thickness, opacity);
     }
     @Override
     public boolean equals(Object obj) {
@@ -245,7 +263,54 @@ public class Cursor {
         }
         else {return false;}
 
+
+
     }
 
+    //Méthodes pour MIRROR version symétrie axiale
+
+    // sortie : le symétrique du curseur sélectionné
+    public Cursor createMirrorAxis(int x1, int y1, int x2, int y2, MapCursor cursors) {
+
+        int cursorSymId = cursors.smallestAvailableId();
+        Cursor cursorSym = new Cursor (cursorSymId);
+        cursorSym.duplicate(this);
+        cursorSym.setDirection(180 + this.getDirection());
+        try {
+            //The chosen cursor is its own image
+            if (2 * this.positionX - (x2 - x1) == 0 && 2 * this.positionY - (y2 - y1) == 0) {
+                return cursorSym;
+            } else {
+                double produitScalaire = (this.getPositionX() * (x2 - x1) + this.getPositionY() * (y2 - y1)) / 2;
+                double determinant = (this.getPositionX() * (y2 - y1) - this.getPositionY() * (x2 - x1)) / 2;
+
+                //The chosen cursor is on the line
+                if (determinant == 0) {
+                    //The chosen cursor is on the left and above the middle of [(x1,y1);(x2,y2)]
+                    if (produitScalaire > 0) {
+                        cursorSym.setPositionX((x2 - x1) - this.getPositionX());
+                        cursorSym.setPositionY((y2 - y1) - this.getPositionY());
+                    }
+                    //The chosen cursor is on the right and below
+                    else {
+                        cursorSym.setPositionX(this.getPositionX() - (x2 - x1));
+                        cursorSym.setPositionY(this.getPositionY() - (y2 - y1));
+                    }
+                } else {
+                    //The chosen cursor is not on the line
+                    double angle = produitScalaire / determinant;
+
+                    //Use rotation matrix to find the cursor's image
+                    int newX = (int) Math.round((this.getPositionX() * Math.cos(2 * angle) - this.getPositionY() * Math.sin(2 * angle)));
+                    int newY = (int) Math.round((this.getPositionX() * Math.sin(2 * angle) - this.getPositionY() * Math.cos(2 * angle)));
+                    cursorSym.setPositionX(newX);
+                    cursorSym.setPositionY(newY);
+                }
+            }
+        }
+        catch (OutOfPositionException e){}
+
+        return cursorSym;
+    }
 
 }

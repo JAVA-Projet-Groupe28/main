@@ -1,6 +1,8 @@
 package com.example.appproject;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -12,6 +14,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -20,11 +24,29 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+
 
 /**
  * The Interface class is the main class of the program, it manages the canvas (drawing area), visible by the user.
  */
 public class Interface extends Application {
+
+    //TODO: version ligne de commande
+
+    //TODO : ameliorer le GUI
+
+    //TODO : Classe Variable
+
+    //TODO : gerer les exceptions
+
+    //TODO : documentation
 
     Interpreter interpreter;
 
@@ -41,7 +63,12 @@ public class Interface extends Application {
     @FXML protected TextField distanceField;
     @FXML protected TextArea Console;
     @FXML protected ColorPicker colorPicker ;
+    @FXML protected TextFlow history;
+    @FXML protected Slider sliderTime;
+    @FXML protected ScrollPane historyScrollPane;
 
+
+    protected int executeTime = 0;
     protected MapCursor mapCursor = new MapCursor();
     protected int cursorIdCounter = 1;
     protected int selectedCursorId = -1;
@@ -55,6 +82,9 @@ public class Interface extends Application {
      * The height of the canvas.
      */
     double screenHeight = screen.getBounds().getHeight();
+    //TODO : ajuster automatiquement
+
+
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -63,6 +93,9 @@ public class Interface extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Dessin de Lignes avec Rectangle Dynamique");
         primaryStage.show();
+
+
+
     }
     public int getSelectedCursorId() {
         return selectedCursorId;
@@ -81,6 +114,14 @@ public class Interface extends Application {
             if (selectedCursor != null) {
                 selectedCursorId = selectedCursor.getId();
             }
+            historyScrollPane.heightProperty().addListener(new ChangeListener<Number>() {
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    // Faites défiler le ScrollPane vers le bas lorsque la taille change
+                    historyScrollPane.setVvalue(1.0);
+                }
+            });
+
         });
     }
 
@@ -138,7 +179,7 @@ public class Interface extends Application {
                 checkPosition(cursor.getPositionX(), cursor.getPositionY());
 
                 moveCursor(cursor);
-                drawLine(tempX, tempY, cursor.getPositionX(), cursor.getPositionY(), cursor.getThickness(), cursor.getColorj()[0], cursor.getColorj()[1], cursor.getColorj()[2]);
+                drawLine(tempX, tempY, cursor.getPositionX(), cursor.getPositionY(), cursor.getThickness(), cursor.getColorj().getRgb()[0], cursor.getColorj().getRgb()[1], cursor.getColorj().getRgb()[2],cursor.getOpacity());
             }
         } catch (NumberFormatException e) {
             Console.appendText("Error: Invalid input\n");
@@ -154,6 +195,12 @@ public class Interface extends Application {
      */
     @FXML
     protected void saveAsPngButtonClicked() {
+        // Vérifiez si le Pane est vide
+        if (isPaneEmpty(drawingPane)) {
+            addHistory("Error: The drawing pane is empty. No image to save.\n", Color.RED);
+            return;
+        }
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG files (*.png)", "*.png"));
         File file = fileChooser.showSaveDialog(drawingPane.getScene().getWindow());
@@ -162,11 +209,15 @@ public class Interface extends Application {
                 WritableImage writableImage = new WritableImage((int) drawingPane.getWidth(), (int) drawingPane.getHeight());
                 drawingPane.snapshot(new SnapshotParameters(), writableImage);
                 ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
+                addHistory("Image saved successfully to: " + file.getAbsolutePath(), Color.BLUE);
             } catch (IOException ex) {
-                Console.appendText("Error: Could not save image\n");
+                addHistory("Error: Could not save image\n", Color.RED);
             }
-            Console.appendText("image save TESTTT");
         }
+    }
+
+    private boolean isPaneEmpty(Pane pane) {
+        return pane.getChildren().isEmpty();
     }
 
     /**
@@ -192,7 +243,8 @@ public class Interface extends Application {
 
             // Set the stroke width and fill color based on the cursor's properties
             triangle.setStrokeWidth(cursor.getThickness());
-            triangle.setFill(Color.rgb(cursor.getColorj()[0], cursor.getColorj()[1], cursor.getColorj()[2]));
+            triangle.setFill(Color.rgb(cursor.getColorj().getRgb()[0], cursor.getColorj().getRgb()[1], cursor.getColorj().getRgb()[2]));
+            triangle.setOpacity(cursor.getOpacity());
 
 
             // Add the triangle to the pane
@@ -239,7 +291,7 @@ public class Interface extends Application {
     /**
      * Draws a line from a position to another, with the specified color and width.
      */
-    protected void drawLine(double startX, double startY, double endX, double endY, double stroke, int r, int g, int b) {
+    protected void drawLine(double startX, double startY, double endX, double endY, double stroke, int r, int g, int b,double opacity) {
         try {
             checkLinePosition(startX, startY, endX, endY);
 
@@ -247,6 +299,7 @@ public class Interface extends Application {
             line.setStrokeWidth(stroke);
             Color customColor = Color.rgb(r, g, b);
             line.setStroke(customColor);
+            line.setOpacity(opacity);
             drawingPane.getChildren().add(line);
         } catch (OutOfPositionException e) {
             Console.appendText(e.getMessage() + "\n");
@@ -254,10 +307,13 @@ public class Interface extends Application {
     }
 
     @FXML
+    protected void setExecuteTime(){
+        executeTime = (int) Math.round(sliderTime.getValue());
+    }
+    @FXML
     protected void setBackground(){
         Color selectedColor = colorPicker.getValue();
         drawingPane.setStyle("-fx-background-color: #" + colorToHex(selectedColor) + ";");
-        cursorPane.setStyle("-fx-background-color: #" + colorToHex(selectedColor) + ";");
     }
 
     protected String colorToHex(Color color) {
@@ -266,7 +322,7 @@ public class Interface extends Application {
                 (int) (color.getGreen() * 255),
                 (int) (color.getBlue() * 255));
     }
-
+    //TODO : empecher la poursuite de l'execution
     /**
      * Checks if the position is in or out of the canvas' dimensions.
      * @param x
@@ -275,6 +331,13 @@ public class Interface extends Application {
      */
     protected void checkPosition(double x, double y) throws OutOfPositionException {
         if (x < 0 || x > drawingPane.getWidth() || y < 0 || y > drawingPane.getHeight()) {
+            this.addHistory("Error: Position out of Pane",Color.RED);
+            throw new OutOfPositionException("Error: Position out of Pane");
+        }
+    }
+    protected void checkPositionByCursor(Cursor cursor) throws OutOfPositionException {
+        if (cursor.getPositionX() < 0 || cursor.getPositionX() > drawingPane.getWidth() || cursor.getPositionY() < 0 || cursor.getPositionY() > drawingPane.getHeight()) {
+            this.addHistory("Error: Position out of Pane for cursor "+cursor.getId(),Color.RED);
             throw new OutOfPositionException("Error: Position out of Pane");
         }
     }
@@ -283,11 +346,32 @@ public class Interface extends Application {
         String aExec = Console.getText();
         Interpreter.interpret(aExec,this,mapCursor,mapCursor.getCursorById(selectedCursorId));
     }
+    public void addHistory(String message,Color color){
+        Text text = new Text(message+"\n");
+        text.setFill(color);
+        history.getChildren().add(text);
+
+    }
 
     protected void checkLinePosition(double startX, double startY, double endX, double endY) throws OutOfPositionException {
         checkPosition(startX, startY);
         checkPosition(endX, endY);
     }
+
+    /* protected void breakDrawing() {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(10), new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                addHistory("pause de " + executeTime, Color.BLACK);
+                System.out.println("test");
+            }
+        }));
+        timeline.play();
+    }
+    protected void startBreak(){
+
+    }
+    */
 
     public double getDrawingPaneWidth(){
         return drawingPane.getWidth();

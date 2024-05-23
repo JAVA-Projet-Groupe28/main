@@ -1,11 +1,11 @@
 package com.example.appproject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.security.Key;
+import java.util.*;
 
 public class MapCursor {
+
+    //TODO : documentation
 
     private Map<Integer, Cursor> cursorMap; // HashMap pour stocker les objets Cursor par id
 
@@ -34,6 +34,17 @@ public class MapCursor {
     // Méthode pour récupérer tous les cursors de la HashMap
     public List<Cursor> getAllCursors() {
         return new ArrayList<>(this.cursorMap.values());
+    }
+
+    //Méthode pour obtenir un l'id disponible le plus petit
+    public int smallestAvailableId(){
+        Set<Integer> keySet = cursorMap.keySet();
+        int smallestId = 0;
+        while(smallestId>=Collections.min(keySet)){
+            keySet.remove(smallestId);
+            smallestId++;
+        }
+        return smallestId;
     }
 
     // Méthode pour effacer tous les cursors de la HashMap

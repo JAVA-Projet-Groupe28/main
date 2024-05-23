@@ -1,6 +1,9 @@
 package com.example.appproject;
 /*import Exception.OutOfRangeRGBException;*/
 public class Colorj {
+
+    //TODO : documentation
+
     int rgb[] = new int[3];
     String web;
     double rgb_double[] = new double[3];

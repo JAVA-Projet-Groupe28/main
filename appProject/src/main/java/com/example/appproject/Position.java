@@ -1,6 +1,9 @@
 package com.example.appproject;
 
 public class Position {
+
+    //TODO : supprimer
+
     int positionX;
     int positionY;
 
@@ -24,4 +27,6 @@ public class Position {
     public void setPositionY(int positionY) {
         this.positionY = positionY;
     }
+
+
 }
