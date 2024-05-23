@@ -70,6 +70,10 @@ public class Interface extends Application {
     public Cursor getselectedCursor(){
         return mapCursor.getCursorById(getSelectedCursorId());
     }
+
+    /**
+     * It manages the selection of active cursor.
+     */
     @FXML
     protected void initialize() {
         cursorListView.setOnMouseClicked(event -> {
@@ -264,7 +268,7 @@ public class Interface extends Application {
     }
 
     /**
-     * Checks if the position is in or out of the canvas' dimentions.
+     * Checks if the position is in or out of the canvas' dimensions.
      * @param x
      * @param y
      * @throws OutOfPositionException
