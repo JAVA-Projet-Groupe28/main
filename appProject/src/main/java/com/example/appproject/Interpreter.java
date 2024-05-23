@@ -37,11 +37,7 @@ public class Interpreter {
                     interfaceInstance.moveCursor(cursor);
                     break;
                 case "COLOR":
-                    cursor.color.setRgb(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]));
-                    interfaceInstance.moveCursor(cursor);
-                    break;
-                case "LOOKAT":
-                    executeLookAt(tokens, interfaceInstance, cursors, cursor);
+                    applyColor(tokens,interfaceInstance, cursor);
                     break;
                 case "THICK":
                     cursor.setThickness(Double.parseDouble(tokens[1]));
@@ -54,6 +50,10 @@ public class Interpreter {
                     break;
                 case "POS":
                     executePos(tokens, interfaceInstance, cursor);
+                    break;
+                case "LOOKAT":
+                    System.out.println("lookat command" + tokens[0] + tokens[1]);
+                    executeLookAt(tokens, interfaceInstance, cursors, cursor);
                     break;
                 case "HIDE":
                     cursor.setHidden(false);
@@ -197,7 +197,6 @@ public class Interpreter {
      * Manages the LOOKAT instructions which can be called with different parameters.
      * The coordinates as integers, a cursor ID as an integer or percentages in abscissa and ordinate of the canvas.
      * */
-
     private static void executeLookAt(String[] tokens, Interface interfaceInstance, MapCursor mapCursor, Cursor cursor){
         if (tokens.length == 2){
             Cursor cursorToLookAt = mapCursor.getCursorById(Integer.parseInt(tokens[1]));
@@ -206,9 +205,8 @@ public class Interpreter {
         }
         else if (tokens.length == 3){
             if (tokens[1].endsWith("%") && tokens[2].endsWith("%")){
-                double canvasWidth = interfaceInstance.getDrawingPaneWidth();
                 double canvasHeight = interfaceInstance.getDrawingPaneHeight();
-                
+                double canvasWidth = interfaceInstance.getDrawingPaneWidth();
                 Percentage abscissa_per = new Percentage(tokens[1]);
                 Percentage ordinate_per = new Percentage(tokens[2]);
 
@@ -224,6 +222,41 @@ public class Interpreter {
 
         interfaceInstance.moveCursor(cursor);
 
+    }
+
+    /**
+     * Executes the instruction COLOR by applying the wanted color to the selected cursor.
+     *
+     * The color can be specified through web format (#RRGGBB) in hexa, in rgb with integers from to 0 to 255 or float
+     * numbers from 0 to 1.
+     * The user does not have to specify the format when it calls the COLOR instruction.
+     * If the user types "COLOR 1 1 1", the program considers it to be integers. So it will apply the color (1,1,1) in
+     * RGB format and not (255,255,255). (255,255,255) can be applied with (1.0,1.0,1.0) for example, or as long as
+     * at least a double number is called (example (1.0,1,1) also works).
+     * */
+    ///Gerer les exceptions, notamment double >1, rgb <0 et >255 ...
+    private static void applyColor(String tokens[], Interface interfaceInstance, Cursor cursor){
+        if (tokens.length == 2){
+            //Web format : #RRGGBB
+            cursor.setColor(tokens[1]);
+        }
+        else {
+            if(tokens[1].contains(".") || tokens[2].contains(".") || tokens[3].contains(".")) {
+                //double value from 0 to 1
+                    double red = Double.parseDouble(tokens[1]);
+                    double green = Double.parseDouble(tokens[2]);
+                    double blue = Double.parseDouble(tokens[3]);
+                    cursor.setColor(red, green, blue);
+            }
+            else{
+                //int values from 0 to 255
+                int red = Integer.parseInt(tokens[1]);
+                int green = Integer.parseInt(tokens[2]);
+                int blue = Integer.parseInt(tokens[3]);
+                cursor.setColor(red,green,blue);
+            }
+        }
+        interfaceInstance.moveCursor(cursor);
     }
 
     private static void executeCursor(String[] tokens, Interface interfaceInstance, MapCursor cursors) {
