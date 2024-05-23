@@ -126,6 +126,7 @@ public class Cursor {
         }
         else {
             setDirection(Math.toDegrees(Math.atan(v / u)));
+            System.out.println("angle rotation en radian : "+Math.atan(v/u)+"\nAngle en degrees : "+Math.toDegrees(Math.atan(v / u)));
         }
     }
 
@@ -137,7 +138,7 @@ public class Cursor {
         lookAt(modelCursor.getPositionX(), modelCursor.getPositionY());
     }
 
-    public void lookAt(Percentage per_x, Percentage per_y, int width, int height){
+    public void lookAt(Percentage per_x, Percentage per_y, double width, double height){
         int lookAt_x = (int) Math.floor(per_x.getValue()*width);
         int lookAt_y = (int) Math.floor(per_y.getValue()*height);
         lookAt(lookAt_x,lookAt_y);
@@ -175,6 +176,7 @@ public class Cursor {
      * The method checks if the angle from the abscissa is in degrees from 0 to 359, and sets the new value.
      */
     public void setDirection(double direction) {
+        System.out.println("Angle : "+direction);
         this.direction = direction % 360;
     }
 
@@ -206,6 +208,17 @@ public class Cursor {
         return this.color.getRgb();
     }
 
+    public void setColor(String webColor){
+        this.color.setRgbFromWeb(webColor);
+    }
+
+    public void setColor(int red, int green, int blue){
+        this.color.setRgb(red,green,blue);
+    }
+
+    public void setColor(double red, double green, double blue){
+        this.color.setRgbFromRgbDouble(red,green,blue);
+    }
 
     @Override
     public String toString() {
