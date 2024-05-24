@@ -57,15 +57,15 @@ public class MapCursor {
      * The method is used to know the smallest unused Key of the Map.
      * @return the smallest available CursorId/Key.
      */
-    public int smallestAvailableId(){
+    public int smallestAvailableId() {
         Set<Integer> keySet = cursorMap.keySet();
-        int smallestId = 0;
-        while(smallestId>=Collections.min(keySet)){
-            keySet.remove(smallestId);
+        int smallestId = 1;
+        while (keySet.contains(smallestId)) {
             smallestId++;
         }
         return smallestId;
     }
+
 
     /**
      * Clear all cursors from the Map

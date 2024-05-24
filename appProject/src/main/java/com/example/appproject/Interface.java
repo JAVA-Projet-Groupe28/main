@@ -70,6 +70,7 @@ public class Interface extends Application {
     @FXML protected TextFlow history;
     @FXML protected Slider sliderTime;
     @FXML protected ScrollPane historyScrollPane;
+    @FXML protected CheckBox errorsOrNot;
 
 
     protected int executeTime = 0;
@@ -87,7 +88,7 @@ public class Interface extends Application {
      * The height of the canvas.
      */
     double screenHeight = screen.getBounds().getHeight();
-    //TODO : ajuster automatiquement
+    protected boolean isChecked;
 
 
 
@@ -250,6 +251,8 @@ public class Interface extends Application {
             triangle.setFill(Color.rgb(cursor.getColorj().getRgb()[0], cursor.getColorj().getRgb()[1], cursor.getColorj().getRgb()[2]));
             triangle.setOpacity(cursor.getOpacity());
 
+            // Set user data for identification
+            triangle.setUserData(cursor.getId());
 
             // Add the triangle to the pane
             cursorPane.getChildren().add(triangle);
@@ -266,7 +269,7 @@ public class Interface extends Application {
      */
     protected void moveCursor(Cursor cursor) {
         // Remove old cursor visual representation
-        cursorPane.getChildren().remove(cursor.getId() - 1);
+        removeCursorVisual(cursor);
 
         // Update the cursor position in the ListView
         cursorListView.getItems().remove(cursor);
@@ -277,20 +280,27 @@ public class Interface extends Application {
     }
 
     /**
-     * Remove the selected cursor from the drawing area Pane.
+     * Remove the visual representation of a cursor from the drawing area Pane.
+     * @param cursorToRemove
+     */
+    protected void removeCursorVisual(Cursor cursorToRemove) {
+        cursorPane.getChildren().removeIf(node -> {
+            if (node instanceof Polygon) {
+                Polygon triangle = (Polygon) node;
+                return triangle.getUserData() != null && triangle.getUserData().equals(cursorToRemove.getId());
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Remove the selected cursor from the drawing area Pane and the map.
      * @param cursorToRemove
      */
     protected void removeCursor(Cursor cursorToRemove) {
-        for (Map.Entry<Integer, Cursor> entry : mapCursor.getCursors().entrySet()) {
-            int cursorId = entry.getKey();
-            Cursor cursor = entry.getValue();
-            if (cursor == cursorToRemove) {
-                cursorPane.getChildren().remove(cursorId - 1);
-                mapCursor.removeCursor(cursorId);
-                cursorListView.getItems().remove(cursor);
-                break;
-            }
-        }
+        mapCursor.removeCursor(cursorToRemove.getId());
+        cursorListView.getItems().remove(cursorToRemove);
+        removeCursorVisual(cursorToRemove);
     }
 
     /**
@@ -357,6 +367,12 @@ public class Interface extends Application {
         history.getChildren().add(text);
 
     }
+
+    protected boolean ignoreErrors() {
+        boolean ignoreErrors = errorsOrNot.isSelected();
+        return ignoreErrors;
+    }
+
 
     protected void checkLinePosition(double startX, double startY, double endX, double endY) throws OutOfPositionException {
         checkPosition(startX, startY);

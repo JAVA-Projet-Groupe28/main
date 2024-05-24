@@ -1,6 +1,7 @@
 package com.example.appproject;
 
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.scene.paint.Color;
 
 import java.util.*;
@@ -25,8 +26,8 @@ import javafx.util.Duration;
  */
 
 public class Interpreter {
-    private static Set<String> existingVariables = new HashSet<>();
 
+    static boolean stop = false;
     //TODO : documentation
 
     //TODO: Vitesse d'exécution
@@ -46,11 +47,46 @@ public class Interpreter {
      * @param cursor The selected cursor. The instruction will be applied on it.
      * @param variables Map of existing variables.
      */
+
+
     public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
+        List<String> instructions = splitCommand(input);
+        interfaceInstance.addHistory(String.valueOf(interfaceInstance.isChecked),Color.RED);
+
+        // Vérifier s'il y a des instructions à exécuter
+        if (instructions.isEmpty()) {
+            return; // Sortir de la méthode si aucune instruction
+        }
+        stop = false;
+        Timeline timeline = new Timeline();
+        int index = 1;
+        for (String instruction : instructions) {
+            if((stop) && (!interfaceInstance.ignoreErrors())){
+                break;
+            }
+            final String currentInstruction = instruction;
+
+            PauseTransition pause = new PauseTransition(Duration.millis(interfaceInstance.executeTime * index));
+            pause.setOnFinished(event -> {
+                try {
+                    executeInstruction(currentInstruction, interfaceInstance, cursors, cursor, variables);
+                } catch (Exception e) {
+                    interfaceInstance.addHistory("Error executing command: " + currentInstruction, Color.RED);
+                    e.printStackTrace();
+                    stop = true; // Stop processing further instructions
+                }
+            });
+            pause.play();
+
+            index++;
+        }
+    }
+
+
+
+
+    private static void executeInstruction(String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
         try {
-            List<String> instructions = splitCommand(input);
-            for (String instruction : instructions) {
-                Thread.sleep(interfaceInstance.executeTime);
 
                 String[] tokens = instruction.split(" ");
                 switch (tokens[0]) {
@@ -149,20 +185,17 @@ public class Interpreter {
                         interfaceInstance.addHistory("Variable " + tokens[1] + " : " + tokens[0], Color.BLACK);
                         break;
                     default:
-                        interfaceInstance.addHistory("Unknown command: " + tokens[0] + tokens[1] + tokens[2] + tokens[3], Color.RED);
-                        throw new IllegalArgumentException("Unknown command: " + tokens[0]);
+                        interfaceInstance.addHistory("Unknown command: " + tokens[0] , Color.RED);
+                        throw new IllegalArgumentException();
                 }
 
             }
-        } catch (IllegalArgumentException e) {
+         catch (IllegalArgumentException e) {
 
-            throw e;
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        catch (Exception e){
+            stop=true;
         }
     }
+
 
     /**
      * Executes the FWD (forward) instruction.
@@ -428,22 +461,15 @@ public class Interpreter {
         if (tokens[currentIndex].startsWith("{")) {
 
             String stepBlock = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
-            List<String> commands = splitCommand(stepBlock);
             Str var = new Str(variableName,variableName);
             variables.addVariable(var);
-
+            String finalCommand ="";
             for (int i = from; i <= to; i += step) {
-                for (String command : commands) {
-                    try {
-                        String modifiedCommand = command.trim().replace(variableName, String.valueOf(i));
-                        interpret(modifiedCommand, interfaceInstance, cursors, cursor, variables);
-                    } catch (Exception e) {
-                        System.out.println("Error : one or more instructions invalid in FOR loop");
-                        variables.removeVariable(var.getVarId());
-                    }
-                }
-            }
+                        String modifiedCommand = stepBlock.trim().replace(variableName, String.valueOf(i));
+                        finalCommand+= modifiedCommand+";";
 
+            }
+            interpret(finalCommand, interfaceInstance, cursors, cursor, variables);
             variables.removeVariable(var.getVarId());
         } else {
             interfaceInstance.addHistory("Error: Invalid FOR loop syntax",Color.RED);
@@ -666,20 +692,21 @@ public class Interpreter {
                 String block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}")).trim();
                 List<String> commands = splitCommand(block);
                 for (String command : commands) {
-                    try {
-                        /*
-                         * First executes the command for the targeted cursor and then the temporary one. Commands by commands
-                         * in the block
-                         */
-                        interpret(command, interfaceInstance, cursors, cursors.getCursorById(tmpCursorId),variables);
-                        interpret(command, interfaceInstance, cursors, tmpCursor,variables);
-                    } catch (Exception e) {
-                        System.out.println("Error : one or more instructions invalid in MIRROR block");
-                        cursors.removeCursor(tmpCursorId);
-                    }
+                    /*
+                     * First executes the command for the targeted cursor and then the temporary one. Commands by commands
+                     * in the block
+                     */
+                    interfaceInstance.addHistory("Début du bloc : " + command, Color.RED);
+                    interpret(command, interfaceInstance, cursors, cursor, variables); // Original cursor
+                    interfaceInstance.addHistory("Cursor original position: " + cursor.getPositionX() + ", " + cursor.getPositionY(), Color.BLUE);
+                    interpret(command, interfaceInstance, cursors, tmpCursor, variables); // Temporary cursor
+                    interfaceInstance.addHistory("Cursor original position: " + cursor.getPositionX() + ", " + cursor.getPositionY(), Color.BLUE);
+                    interfaceInstance.addHistory("Cursor temporaire position: " + tmpCursor.getPositionX() + ", " + tmpCursor.getPositionY(), Color.GREEN);
+                    interfaceInstance.addHistory("Fin du bloc", Color.RED);
                 }
-                cursors.removeCursor(tmpCursorId);
+                interfaceInstance.removeCursor(tmpCursor);
             } catch (OutOfPositionException e) {
+                interfaceInstance.addHistory("error : symetry",Color.RED);
             }
         }
 
@@ -719,21 +746,18 @@ public class Interpreter {
 
             interfaceInstance.drawCursor(tmpCursor);
             String Block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
-            List<String> commands = splitCommand(Block);
-            for (String command : commands) {
+
                 try {
                     /*
-                     * First executes the command for the targeted cursor and then the temporary one. Commands by commands
-                     * in the block
+                     * Exécute d'abord la commande pour le curseur ciblé, puis pour celui temporaire. Commande par commande
+                     * dans le bloc
                      */
-                    interpret(command, interfaceInstance, cursors, cursor, variables);
-                    interpret(command, interfaceInstance, cursors, tmpCursor, variables);
-                } catch (Exception e) {
-                    System.out.println("Error : one or more instructions invalid in MIRROR block");
+                    interpret(Block, interfaceInstance, cursors, cursor, variables);
+                    interpret(Block, interfaceInstance, cursors, tmpCursor, variables);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Erreur : une ou plusieurs instructions invalides dans le bloc MIRROR");
                     cursors.removeCursor(tmpCursorId);
                 }
-            }
-            //At the end, the temporary cursor is removed.
             cursors.removeCursor(tmpCursorId);
         }
     }
