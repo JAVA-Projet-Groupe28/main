@@ -3,22 +3,32 @@ package com.example.appproject;
 import java.security.Key;
 import java.util.*;
 
+/**
+ * MapCursor is used to stock in a HashMap and manage all the cursors available.
+ */
 public class MapCursor {
 
-    //TODO : documentation
-
-    private Map<Integer, Cursor> cursorMap; // HashMap pour stocker les objets Cursor par id
+    /**
+     * The map stocks the Cursor objects by id (CursorId) as Key.
+     */
+    private Map<Integer, Cursor> cursorMap;
 
     public MapCursor() {
-        this.cursorMap = new HashMap<>(); // Initialisation de la HashMap
+        this.cursorMap = new HashMap<>(); // Initialisation
     }
 
-    // Méthode pour ajouter un Cursor à la HashMap
+    /**
+     * Method to add a new cursor to the Map, with the selected id.
+     * @param cursor
+     */
     public void addCursor(Cursor cursor) {
         this.cursorMap.put(cursor.getId(), cursor);
     }
 
-    // Méthode pour supprimer un Cursor de la HashMap
+    /**
+     * Deletes the cursor corresponding to id.
+     * @param id Key of the cursor in the Map
+     */
     public void removeCursor(int id) {
         this.cursorMap.remove(id);
     }
@@ -26,17 +36,27 @@ public class MapCursor {
         return this.cursorMap;
     }
 
-    // Méthode pour récupérer un Cursor par son id
+    /**
+     * Returns the Cursor object designated by its id.
+     * @param id
+     * @return
+     */
     public Cursor getCursorById(int id) {
-        return this.cursorMap.get(id); // Retourne le Cursor correspondant à l'id, ou null s'il n'existe pas
+        return this.cursorMap.get(id); // Returns null if no cursor is matching the id
     }
 
-    // Méthode pour récupérer tous les cursors de la HashMap
+    /**
+     * Returns the List of all cursors in the Map
+     * @return
+     */
     public List<Cursor> getAllCursors() {
         return new ArrayList<>(this.cursorMap.values());
     }
 
-    //Méthode pour obtenir un l'id disponible le plus petit
+    /**
+     * The method is used to know the smallest unused Key of the Map.
+     * @return the smallest available CursorId/Key.
+     */
     public int smallestAvailableId(){
         Set<Integer> keySet = cursorMap.keySet();
         int smallestId = 0;
@@ -47,7 +67,9 @@ public class MapCursor {
         return smallestId;
     }
 
-    // Méthode pour effacer tous les cursors de la HashMap
+    /**
+     * Clear all cursors from the Map
+     */
     public void clearCursors() {
         cursorMap.clear();
     }
