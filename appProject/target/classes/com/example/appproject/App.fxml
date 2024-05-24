@@ -96,7 +96,7 @@
                                     <Cursor fx:constant="HAND" />
                                  </cursor>
                               </Button>
-                              <CheckBox fx:id="errorsOrNot" layoutX="136.0" layoutY="144.0" mnemonicParsing="false" prefHeight="88.0" prefWidth="170.0" text="ignore errors">
+                              <CheckBox fx:id="errorsOrNot" layoutX="136.0" layoutY="144.0" mnemonicParsing="false" prefHeight="88.0" prefWidth="170.0" selected="true" text="ignore errors" textAlignment="CENTER">
                                  <font>
                                     <Font size="20.0" />
                                  </font>
@@ -115,6 +115,7 @@
                      <menus>
                         <Menu mnemonicParsing="false" text="File">
                            <items>
+                              <MenuItem mnemonicParsing="false" onAction="#openFile" text="Open file" />
                               <MenuItem mnemonicParsing="false" onAction="#saveAsPngButtonClicked" text="Save" />
                            </items>
                         </Menu>

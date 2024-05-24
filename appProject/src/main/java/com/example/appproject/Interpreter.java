@@ -30,10 +30,10 @@ public class Interpreter {
     static boolean stop = false;
     //TODO : documentation
 
-    //TODO: Vitesse d'exécution
 
-    //TODO : each execution should modify history -> syntax handling
-
+    public boolean getStop(){
+        return stop;
+    }
     /**
      * The main method of Interpreter, it identifies with a switch what instruction has been called and executes it, or
      * throws an exception.
@@ -47,7 +47,6 @@ public class Interpreter {
      * @param cursor The selected cursor. The instruction will be applied on it.
      * @param variables Map of existing variables.
      */
-
 
     public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
         List<String> instructions = splitCommand(input);

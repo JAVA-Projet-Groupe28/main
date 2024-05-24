@@ -1,5 +1,6 @@
 package com.example.appproject;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -21,7 +22,9 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -71,6 +74,7 @@ public class Interface extends Application {
     @FXML protected Slider sliderTime;
     @FXML protected ScrollPane historyScrollPane;
     @FXML protected CheckBox errorsOrNot;
+    @FXML protected MenuItem loadFileButton ;
 
 
     protected int executeTime = 0;
@@ -361,6 +365,61 @@ public class Interface extends Application {
         String instruction = Console.getText();
         Interpreter.interpret(instruction,this,mapCursor,mapCursor.getCursorById(selectedCursorId),mapVariable);
     }
+    @FXML
+    public void openFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a file");
+
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Text Files", "*.txt")
+        );
+
+        Stage stage = (Stage) drawingPane.getScene().getWindow();
+
+        File selectedFile = fileChooser.showOpenDialog(stage);
+
+        if (selectedFile != null) {
+            addHistory("File selected: " + selectedFile.getAbsolutePath(), Color.BLUE);
+            try {
+                scanFile(selectedFile);
+            } catch (IOException e) {
+                // Gérer l'exception ici
+                System.err.println("Error while reading the file: " + e.getMessage());
+                addHistory("Error reading the file", Color.RED);
+            }
+        } else {
+            addHistory("Nothing file selected", Color.RED);
+        }
+    }
+
+
+
+    private void scanFile(File file) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            //TODO : gérer STOP
+            boolean stop =false;
+            String line;
+            Timeline timeline = new Timeline();
+            int index = 1;
+            while ((line = br.readLine()) != null) {
+                if(stop && !this.isChecked){
+                    break;
+                }
+                PauseTransition pause = new PauseTransition(Duration.millis(executeTime * index));
+                String finalLine = line;
+                pause.setOnFinished(event -> {
+
+                    Interpreter.interpret(finalLine,this,mapCursor,mapCursor.getCursorById(selectedCursorId),mapVariable);
+
+                });
+                pause.play();
+                index++ ;
+            }
+        }
+    }
+
+
+
     public void addHistory(String message,Color color){
         Text text = new Text(message+"\n");
         text.setFill(color);
