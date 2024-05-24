@@ -15,9 +15,9 @@ import javafx.util.Duration;
 /**
  * The interpret method is used to execute the instructions asked by the user.
  *
- * The instruction takes the form of a String composed of tokens.
+ * The instruction takes the form of a String composed of tokens (Strings separated by " ").
  * The first token is the actual instruction (FWD, BWD, HIDE, ...), it is caught with a switch to execute the right
- * behavior for each possible instruction, or throw an exception if no known instructions is detected.
+ * behavior for each possible instruction, or throw an exception if no known instruction is detected.
  *
  * For each instruction, the selected Cursor object has its attributes updated and the Interface object, which is
  * the drawing area seen by the user, is updated.
@@ -33,10 +33,21 @@ public class Interpreter {
 
     //TODO : each execution should modify history -> syntax handling
 
+    /**
+     * The main method of Interpreter, it identifies with a switch what instruction has been called and executes it, or
+     * throws an exception.
+     * Every executed instruction or Errors/Exceptions are stored in the History and printed in the history console on
+     * the interface.
+     *
+     * @param input The command entered by the user. It is divided in a List of tokens, the first token is the instruction
+     *              to execute, the rest are the values/parameters.
+     * @param interfaceInstance The interface used to draw.
+     * @param cursors Map of existing cursors.
+     * @param cursor The selected cursor. The instruction will be applied on it.
+     * @param variables Map of existing variables.
+     */
     public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
         try {
-
-
             List<String> instructions = splitCommand(input);
             for (String instruction : instructions) {
                 Thread.sleep(interfaceInstance.executeTime);
@@ -109,12 +120,16 @@ public class Interpreter {
                         break;
                     case "IF":
                         executeIf(tokens, instruction, interfaceInstance, cursors, cursor, variables);
+                        break;
                     case "WHILE":
                         executeWhile(tokens, instruction, interfaceInstance, cursors, cursor, variables);
+                        break;
                     case "MIMIC":
                         executeMimic(tokens, instruction, interfaceInstance, cursors, cursor, variables);
+                        break;
                     case "MIRROR":
                         executeMirror(tokens, instruction, interfaceInstance, cursors, cursor, variables);
+                        break;
                     case "NUM":
                         //TODO : get value of created variable
                         executeNum(tokens, interfaceInstance, variables);
@@ -132,6 +147,7 @@ public class Interpreter {
                     case "DEL":
                         executeDel(tokens, interfaceInstance, variables);
                         interfaceInstance.addHistory("Variable " + tokens[1] + " : " + tokens[0], Color.BLACK);
+                        break;
                     default:
                         interfaceInstance.addHistory("Unknown command: " + tokens[0] + tokens[1] + tokens[2] + tokens[3], Color.RED);
                         throw new IllegalArgumentException("Unknown command: " + tokens[0]);
@@ -145,12 +161,11 @@ public class Interpreter {
             throw new RuntimeException(e);
         }
         catch (Exception e){
-            return;
         }
     }
 
     /**
-     * Executes the FORWARD instruction.
+     * Executes the FWD (forward) instruction.
      * It moves the cursor following its direction by the "distance" entered by the user.
      * It takes into account if the user entered a percentage, symbolized with a '%' or not.
      *
@@ -162,8 +177,10 @@ public class Interpreter {
         try {
             int distance;
 
-            //If the user enters a percentage, it adapts the forward method so the distance is the percentage of
-            //the largest dimension of the canvas between width and height.
+            /*
+            * If the user enters a percentage, it adapts the forward method so the distance is the percentage of
+            * the largest dimension of the canvas between width and height.
+            */
             if (tokens[1].endsWith("%")) {
                 Percentage distance_per = new Percentage(tokens[1]);
                 double dimension = Math.max(interfaceInstance.getDrawingPaneWidth(), interfaceInstance.getDrawingPaneHeight());
@@ -171,10 +188,11 @@ public class Interpreter {
             } else {
                 distance = Integer.parseInt(tokens[1]);
             }
-            if (cursor != null) {
 
+            if (cursor != null) {
                 int tempX = cursor.getPositionX();
                 int tempY = cursor.getPositionY();
+                
                 interfaceInstance.checkPosition(tempX+distance * Math.cos(Math.toRadians(cursor.getDirection())),tempY+ distance * Math.sin(Math.toRadians(cursor.getDirection())));
                 cursor.forward(distance);
                 interfaceInstance.checkPosition(cursor.getPositionX(), cursor.getPositionY());
@@ -192,6 +210,11 @@ public class Interpreter {
         }
     }
 
+    /**
+     * Executes the BWD (backward) instruction.
+     * It moves the cursor following its direction by the "distance" entered by the user.
+     * It takes into account if the user entered a percentage, symbolized with a '%' or not.
+     */
     private static void executeBwd(String[] tokens, Interface interfaceInstance, Cursor cursor) {
         try {
             int distance;
@@ -221,7 +244,8 @@ public class Interpreter {
     }
 
     /**
-     * Execute the POS instruction.
+     * Executes the POS (position) instruction.
+     * It changes the coordinates of the selected cursor to values entered as arguments.
      */
     private static void executePos(String[] tokens, Interface interfaceInstance, Cursor cursor) {
         if (cursor != null) {
@@ -256,7 +280,7 @@ public class Interpreter {
     }
 
     /**
-     * Execute the MOV instruction.
+     * Executes the MOV (move) instruction.
      * As executePos() but it draws the line between the last position of the cursor and the new one.
      */
     private static void executeMove(String[] tokens, Interface interfaceInstance, Cursor cursor) {
@@ -277,32 +301,36 @@ public class Interpreter {
     }
 
     /**
-     * Manages the LOOKAT instructions which can be called with different parameters.
-     * The coordinates as integers, a cursor ID as an integer or percentages in abscissa and ordinate of the canvas.
+     * Executes the LOOKAT instructions which can be called with different parameters.
+     * The coordinates as integers, a cursor ID as an integer or the abscissa and ordinate in percentages of the canvas.
+     * @param mapCursor The Map of cursors is needed when the selected cursor is asked to look at another cursor.
      */
     private static void executeLookAt(String[] tokens, Interface interfaceInstance, MapCursor mapCursor, Cursor cursor) {
-        if (tokens.length == 2) {
-            Cursor cursorToLookAt = mapCursor.getCursorById(Integer.parseInt(tokens[1]));
+        try {
+            if (tokens.length == 2) {
+                Cursor cursorToLookAt = mapCursor.getCursorById(Integer.parseInt(tokens[1]));
 
-            cursor.lookAt(cursorToLookAt);
-        } else if (tokens.length == 3) {
-            if (tokens[1].endsWith("%") && tokens[2].endsWith("%")) {
-                double canvasHeight = interfaceInstance.getDrawingPaneHeight();
-                double canvasWidth = interfaceInstance.getDrawingPaneWidth();
-                Percentage abscissa_per = new Percentage(tokens[1]);
-                Percentage ordinate_per = new Percentage(tokens[2]);
+                cursor.lookAt(cursorToLookAt);
+            } else if (tokens.length == 3) {
+                if (tokens[1].endsWith("%") && tokens[2].endsWith("%")) {
+                    double canvasHeight = interfaceInstance.getDrawingPaneHeight();
+                    double canvasWidth = interfaceInstance.getDrawingPaneWidth();
+                    Percentage abscissa_per = new Percentage(tokens[1]);
+                    Percentage ordinate_per = new Percentage(tokens[2]);
 
-                cursor.lookAt(abscissa_per, ordinate_per, canvasWidth, canvasHeight);
-            } else {
-                int posX = Integer.parseInt(tokens[1]);
-                int posY = Integer.parseInt(tokens[2]);
+                    cursor.lookAt(abscissa_per, ordinate_per, canvasWidth, canvasHeight);
+                } else {
+                    int posX = Integer.parseInt(tokens[1]);
+                    int posY = Integer.parseInt(tokens[2]);
 
-                cursor.lookAt(posX, posY);
+                    cursor.lookAt(posX, posY);
+                }
             }
+            interfaceInstance.moveCursor(cursor);
         }
-
-        interfaceInstance.moveCursor(cursor);
-
+        catch (IllegalArgumentException e){
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+        }
     }
 
     /**
@@ -343,14 +371,14 @@ public class Interpreter {
             int cursorId = Integer.parseInt(tokens[1]);
             Cursor existingCursor = cursors.getCursorById(cursorId);
             if (existingCursor != null) {
-                interfaceInstance.Console.appendText("Error: Cursor with ID " + cursorId + " already exists\n");
+                interfaceInstance.addHistory("Error: Cursor with ID " + cursorId + " already exists",Color.RED);
                 return;
             }
             Cursor newCursor = new Cursor(cursorId);
             cursors.addCursor(newCursor);
             interfaceInstance.drawCursor(newCursor);
         } catch (NumberFormatException e) {
-            interfaceInstance.Console.appendText("Error: Invalid input\n");
+            interfaceInstance.addHistory("Error: Invalid input to create a Cursor",Color.RED);
         }
     }
 
@@ -359,7 +387,7 @@ public class Interpreter {
 
 
         if (tokens.length < 3) {
-            interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
+            interfaceInstance.addHistory("Error: Invalid FOR loop syntax",Color.RED);
             return;
         }
 
@@ -379,7 +407,7 @@ public class Interpreter {
 
 
             if (!tokens[currentIndex].equals("TO") || !tokens[currentIndex + 2].equals("STEP")) {
-                interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
+                interfaceInstance.addHistory("Error: Invalid FOR loop syntax",Color.RED);
                 return;
             }
             to = Integer.parseInt(tokens[++currentIndex]);
@@ -388,7 +416,7 @@ public class Interpreter {
             currentIndex++;
         } else {
             if (!tokens[currentIndex].equals("TO")) {
-                interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n" + tokens[currentIndex]);
+                interfaceInstance.addHistory("Error: Invalid FOR loop syntax "+ tokens[currentIndex],Color.RED);
                 return;
             }
             to = Integer.parseInt(tokens[++currentIndex]);
@@ -418,7 +446,7 @@ public class Interpreter {
 
             variables.removeVariable(var.getVarId());
         } else {
-            interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax c la d\n");
+            interfaceInstance.addHistory("Error: Invalid FOR loop syntax",Color.RED);
         }
         }catch (IllegalArgumentException e){
             interfaceInstance.addHistory("Error : variable "+tokens[1]+" already exist",Color.RED);
@@ -427,7 +455,7 @@ public class Interpreter {
 
     private static void executeIf(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
         if (tokens.length < 2) {
-            interfaceInstance.Console.appendText("Error : Invalid IF syntax\n");
+            interfaceInstance.addHistory("Error : Invalid IF syntax",Color.RED);
             return;
         }
         String condition = instruction.substring(instruction.indexOf("IF") + 3, instruction.indexOf('{')).trim();
@@ -525,7 +553,7 @@ public class Interpreter {
 
     private static void executeWhile(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
         if (tokens.length < 2) {
-            interfaceInstance.Console.appendText("Error : Invalid IF syntax\n");
+            interfaceInstance.addHistory("Error : Invalid While syntax",Color.RED);
             return;
         }
         String condition = instruction.substring(instruction.indexOf("WHILE") + 3, instruction.indexOf('{')).trim();
@@ -565,7 +593,7 @@ public class Interpreter {
 
     private static void executeMimic(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
         if (tokens.length < 2) {
-            interfaceInstance.Console.appendText("Error : Invalid IF syntax\n");
+            interfaceInstance.addHistory("Error : Invalid Mimic syntax",Color.RED);
             return;
         }
         /*
@@ -711,6 +739,7 @@ public class Interpreter {
     }
 
 
+
     private static void executeNum(String[] tokens, Interface interfaceInstance, MapVariable vars) {
         try {
             String newId = tokens[1];
@@ -728,7 +757,7 @@ public class Interpreter {
             vars.addVariable(newVar);
 
         } catch (NumberFormatException e) {
-            interfaceInstance.Console.appendText("Error: Invalid input\n");
+            interfaceInstance.addHistory("Error: Invalid input in NUM",Color.RED);
         }catch (IllegalArgumentException e){
             interfaceInstance.addHistory("The variable "+tokens[1]+" already exists",Color.RED);
         }
@@ -748,7 +777,7 @@ public class Interpreter {
             }
             vars.addVariable(newVar);
         } catch (NumberFormatException e) {
-            interfaceInstance.Console.appendText("Error: Invalid input\n");
+            interfaceInstance.addHistory("Error: Invalid input in STR",Color.RED);
         }catch (IllegalArgumentException e){
             interfaceInstance.addHistory("The variable "+tokens[1]+" already exists",Color.RED);
         }
@@ -770,7 +799,7 @@ public class Interpreter {
             vars.addVariable(newVar);
 
         } catch (NumberFormatException e) {
-            interfaceInstance.Console.appendText("Error: Invalid input\n");
+            interfaceInstance.addHistory("Error: Invalid input in BOOL",Color.RED);
         } catch (IllegalArgumentException e){
             interfaceInstance.addHistory("The variable "+tokens[1]+" already exists",Color.RED);
         }

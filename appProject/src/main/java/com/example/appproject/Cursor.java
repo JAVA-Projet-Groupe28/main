@@ -152,8 +152,13 @@ public class Cursor {
      * Turns the cursor to point at the "modelCursor".
      * @param modelCursor The cursor to point at.
      */
-    public void lookAt(Cursor modelCursor){
-        lookAt(modelCursor.getPositionX(), modelCursor.getPositionY());
+    public void lookAt(Cursor modelCursor) throws IllegalArgumentException{
+        if (!modelCursor.equals(this)) {
+            lookAt(modelCursor.getPositionX(), modelCursor.getPositionY());
+        }
+        else {
+            throw new IllegalArgumentException("Cursor can not look at itself");
+        }
     }
 
     public void lookAt(Percentage per_x, Percentage per_y, double width, double height){
