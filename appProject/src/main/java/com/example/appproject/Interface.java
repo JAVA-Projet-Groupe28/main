@@ -42,11 +42,15 @@ public class Interface extends Application {
 
     //TODO : ameliorer le GUI
 
-    //TODO : Classe Variable
+    //TODO : Classe com.example.appproject.Variable
 
     //TODO : gerer les exceptions
 
     //TODO : documentation
+
+    //TODO (facu) : liste des variables ListView<Variable>
+
+    //TODO : Importer un fichier texte
 
     Interpreter interpreter;
 
@@ -73,6 +77,7 @@ public class Interface extends Application {
     protected int cursorIdCounter = 1;
     protected int selectedCursorId = -1;
     Screen screen = Screen.getPrimary();
+    protected MapVariable mapVariable = new MapVariable();
 
     /**
      * The width of the canvas.
@@ -93,13 +98,12 @@ public class Interface extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Dessin de Lignes avec Rectangle Dynamique");
         primaryStage.show();
-
-
-
     }
+
     public int getSelectedCursorId() {
         return selectedCursorId;
     }
+
     public Cursor getselectedCursor(){
         return mapCursor.getCursorById(getSelectedCursorId());
     }
@@ -256,7 +260,8 @@ public class Interface extends Application {
     }
 
     /**
-     * Erase the old cursor representation and redraw it at the new position.
+     * Displays the movement of the selected cursor on the drawing area.
+     * It erases the old cursor representation and redraws it at the new position.
      * @param cursor
      */
     protected void moveCursor(Cursor cursor) {
@@ -272,7 +277,7 @@ public class Interface extends Application {
     }
 
     /**
-     * Remove the selected cursor from the mapCursor Map.
+     * Remove the selected cursor from the drawing area Pane.
      * @param cursorToRemove
      */
     protected void removeCursor(Cursor cursorToRemove) {
@@ -343,8 +348,8 @@ public class Interface extends Application {
     }
     @FXML
     public void scan(){
-        String aExec = Console.getText();
-        Interpreter.interpret(aExec,this,mapCursor,mapCursor.getCursorById(selectedCursorId));
+        String instruction = Console.getText();
+        Interpreter.interpret(instruction,this,mapCursor,mapCursor.getCursorById(selectedCursorId),mapVariable);
     }
     public void addHistory(String message,Color color){
         Text text = new Text(message+"\n");

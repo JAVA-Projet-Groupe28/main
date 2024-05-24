@@ -3,10 +3,7 @@ package com.example.appproject;
 import javafx.animation.Timeline;
 import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
@@ -34,16 +31,15 @@ public class Interpreter {
 
     //TODO: Vitesse d'exécution
 
-    //TODO: Out of bounds c'est bon normalement !:!!! (;
+    //TODO : each execution should modify history -> syntax handling
 
-    //TODO: Classe Variable
-
-    public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
+    public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
         try {
 
 
             List<String> instructions = splitCommand(input);
             for (String instruction : instructions) {
+                Thread.sleep(interfaceInstance.executeTime);
 
                 String[] tokens = instruction.split(" ");
                 switch (tokens[0]) {
@@ -109,18 +105,35 @@ public class Interpreter {
                         interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0], Color.BLACK);
                         break;
                     case "FOR":
-                        handleForLoop(tokens, instruction, interfaceInstance, cursors, cursor);
+                        handleForLoop(tokens, instruction, interfaceInstance, cursors, cursor, variables);
                         break;
                     case "IF":
-                        executeIf(tokens, instruction, interfaceInstance, cursors, cursor);
+                        executeIf(tokens, instruction, interfaceInstance, cursors, cursor, variables);
                     case "WHILE":
-                        executeWhile(tokens, instruction, interfaceInstance, cursors, cursor);
+                        executeWhile(tokens, instruction, interfaceInstance, cursors, cursor, variables);
                     case "MIMIC":
-                        executeMimic(tokens, instruction, interfaceInstance, cursors, cursor);
+                        executeMimic(tokens, instruction, interfaceInstance, cursors, cursor, variables);
                     case "MIRROR":
-                        executeMirror(tokens, instruction, interfaceInstance, cursors, cursor);
+                        executeMirror(tokens, instruction, interfaceInstance, cursors, cursor, variables);
+                    case "NUM":
+                        //TODO : get value of created variable
+                        executeNum(tokens, interfaceInstance, variables);
+                        interfaceInstance.addHistory(" new Variable " + tokens[1] + " : " + tokens[0], Color.BLACK);
+                        break;
+
+                    case "STR":
+                        executeStr(tokens, interfaceInstance, variables);
+                        interfaceInstance.addHistory(" new Variable " + tokens[1] + " : " + tokens[0], Color.BLACK);
+                        break;
+                    case "BOOL":
+                        executeBool(tokens, interfaceInstance, variables);
+                        interfaceInstance.addHistory(" new Variable " + tokens[1] + " : " + tokens[0], Color.BLACK);
+                        break;
+                    case "DEL":
+                        executeDel(tokens, interfaceInstance, variables);
+                        interfaceInstance.addHistory("Variable " + tokens[1] + " : " + tokens[0], Color.BLACK);
                     default:
-                        interfaceInstance.addHistory("Unknown command: " + tokens[0], Color.RED);
+                        interfaceInstance.addHistory("Unknown command: " + tokens[0] + tokens[1] + tokens[2] + tokens[3], Color.RED);
                         throw new IllegalArgumentException("Unknown command: " + tokens[0]);
                 }
 
@@ -128,6 +141,11 @@ public class Interpreter {
         } catch (IllegalArgumentException e) {
 
             throw e;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        catch (Exception e){
+            return;
         }
     }
 
@@ -336,16 +354,18 @@ public class Interpreter {
         }
     }
 
-    private static void handleForLoop(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
+    private static void handleForLoop(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
+        try {
+
+
         if (tokens.length < 3) {
             interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax\n");
             return;
         }
 
         String variableName = tokens[1];
-        if (existingVariables.contains(variableName)) {
-            interfaceInstance.Console.appendText("Error: Variable " + variableName + " already exists\n");
-            return;
+        if(variables.containsKey(variableName)){
+            throw new IllegalArgumentException();
         }
 
         int from = 0;
@@ -381,27 +401,31 @@ public class Interpreter {
 
             String stepBlock = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
             List<String> commands = splitCommand(stepBlock);
-            existingVariables.add(variableName);
+            Str var = new Str(variableName,variableName);
+            variables.addVariable(var);
 
             for (int i = from; i <= to; i += step) {
                 for (String command : commands) {
                     try {
                         String modifiedCommand = command.trim().replace(variableName, String.valueOf(i));
-                        interpret(modifiedCommand, interfaceInstance, cursors, cursor);
+                        interpret(modifiedCommand, interfaceInstance, cursors, cursor, variables);
                     } catch (Exception e) {
                         System.out.println("Error : one or more instructions invalid in FOR loop");
-                        existingVariables.remove(variableName);
+                        variables.removeVariable(var.getVarId());
                     }
                 }
             }
 
-            existingVariables.remove(variableName);
+            variables.removeVariable(var.getVarId());
         } else {
             interfaceInstance.Console.appendText("Error: Invalid FOR loop syntax c la d\n");
         }
+        }catch (IllegalArgumentException e){
+            interfaceInstance.addHistory("Error : variable "+tokens[1]+" already exist",Color.RED);
+        }
     }
 
-    private static void executeIf(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
+    private static void executeIf(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
         if (tokens.length < 2) {
             interfaceInstance.Console.appendText("Error : Invalid IF syntax\n");
             return;
@@ -411,7 +435,7 @@ public class Interpreter {
         if (evaluateBooleanExpression(condition)) {
             List<String> commands = splitCommand(block);
             for (String command : commands) {
-                interpret(command, interfaceInstance, cursors, cursor);
+                interpret(command, interfaceInstance, cursors, cursor, variables);
             }
         }
     }
@@ -499,7 +523,7 @@ public class Interpreter {
     }
 
 
-    private static void executeWhile(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
+    private static void executeWhile(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
         if (tokens.length < 2) {
             interfaceInstance.Console.appendText("Error : Invalid IF syntax\n");
             return;
@@ -509,7 +533,7 @@ public class Interpreter {
         while (evaluateBooleanExpression(condition)) {
             List<String> commands = splitCommand(block);
             for (String command : commands) {
-                interpret(command, interfaceInstance, cursors, cursor);
+                interpret(command, interfaceInstance, cursors, cursor, variables);
             }
         }
     }
@@ -539,7 +563,7 @@ public class Interpreter {
         return intsructionSplit;
     }
 
-    private static void executeMimic(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
+    private static void executeMimic(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
         if (tokens.length < 2) {
             interfaceInstance.Console.appendText("Error : Invalid IF syntax\n");
             return;
@@ -565,8 +589,8 @@ public class Interpreter {
                  * First executes the command for the targeted cursor and then the temporary one. Commands by commands
                  * in the block
                  */
-                interpret(command, interfaceInstance, cursors, cursors.getCursorById(modelCursorId));
-                interpret(command, interfaceInstance, cursors, tmpCursor);
+                interpret(command, interfaceInstance, cursors, cursors.getCursorById(modelCursorId),variables);
+                interpret(command, interfaceInstance, cursors, tmpCursor,variables);
             } catch (Exception e) {
                 System.out.println("Error : one or more instructions invalid in MIMIC block");
                 cursors.removeCursor(tmpCursorId);
@@ -578,8 +602,8 @@ public class Interpreter {
 
     //TODO : MIRROR axial
 
-    private static void executeMirror(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor) {
-        //central symetry
+    private static void executeMirror(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
+        //central symmetry
         if (tokens[3].contains("{")) {
             double symetryPointX;
             double symetryPointY;
@@ -607,8 +631,8 @@ public class Interpreter {
 
             //Applying symmetry
             try {
-                tmpCursor.setPositionX((int) Math.round(Math.abs(symetryPointX - cursor.getPositionX()) + symetryPointX));
-                tmpCursor.setPositionY((int) Math.round(Math.abs(symetryPointY - cursor.getPositionY()) + symetryPointY));
+                tmpCursor.setPositionX((int) Math.round(2*symetryPointX - cursor.getPositionX()));
+                tmpCursor.setPositionY((int) Math.round(2*symetryPointY - cursor.getPositionY()));
                 tmpCursor.turn(180);
                 interfaceInstance.drawCursor(tmpCursor);
                 String block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}")).trim();
@@ -619,8 +643,8 @@ public class Interpreter {
                          * First executes the command for the targeted cursor and then the temporary one. Commands by commands
                          * in the block
                          */
-                        interpret(command, interfaceInstance, cursors, cursors.getCursorById(tmpCursorId));
-                        interpret(command, interfaceInstance, cursors, tmpCursor);
+                        interpret(command, interfaceInstance, cursors, cursors.getCursorById(tmpCursorId),variables);
+                        interpret(command, interfaceInstance, cursors, tmpCursor,variables);
                     } catch (Exception e) {
                         System.out.println("Error : one or more instructions invalid in MIRROR block");
                         cursors.removeCursor(tmpCursorId);
@@ -631,17 +655,39 @@ public class Interpreter {
             }
         }
 
-        // symétrie axiale
+        // symmetrical axis
         else if (tokens[5].contains("{")) {
-            int x1 = Integer.parseInt(tokens[1]);
-            int y1 = Integer.parseInt(tokens[2]);
-            int x2 = Integer.parseInt(tokens[3]);
-            int y2 = Integer.parseInt(tokens[4]);
-            Cursor tmpCursor = cursor.createMirrorAxis(x1, y1, x2, y2, cursors);
 
-            int tmpCursorId = cursors.smallestAvailableId();
+            //Coordinates of the symmetry axis
+            int x1,y1,x2,y2;
 
-            tmpCursor.duplicate(cursor);
+            //Managing the parameters in percentages
+            if (tokens[1].endsWith("%") && tokens[2].endsWith("%") && tokens[3].endsWith("%") && tokens[4].endsWith("%")) {
+                double canvasHeight = interfaceInstance.getDrawingPaneHeight();
+                double canvasWidth = interfaceInstance.getDrawingPaneWidth();
+
+                Percentage x1_per = new Percentage(tokens[1]);
+                Percentage y1_per = new Percentage(tokens[2]);
+                Percentage x2_per = new Percentage(tokens[3]);
+                Percentage y2_per = new Percentage(tokens[4]);
+
+                x1 = (int) Math.round(canvasWidth * x1_per.getValue());
+                y1 = (int) Math.round(canvasHeight * y1_per.getValue());
+                x2 = (int) Math.round(canvasWidth * x2_per.getValue());
+                y2 = (int) Math.round(canvasHeight * y2_per.getValue());
+
+            } else {
+                x1 = Integer.parseInt(tokens[1]);
+                y1 = Integer.parseInt(tokens[2]);
+                x2 = Integer.parseInt(tokens[3]);
+                y2 = Integer.parseInt(tokens[4]);
+            }
+
+            interfaceInstance.drawLine(x1,y1,x2,y2,2,0,0,0,1);
+
+            Cursor tmpCursor;
+            tmpCursor = cursor.createMirrorAxis(x1, y1, x2, y2, cursors);
+            int tmpCursorId = tmpCursor.getId();
 
             interfaceInstance.drawCursor(tmpCursor);
             String Block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
@@ -652,8 +698,8 @@ public class Interpreter {
                      * First executes the command for the targeted cursor and then the temporary one. Commands by commands
                      * in the block
                      */
-                    interpret(command, interfaceInstance, cursors, cursors.getCursorById(tmpCursorId));
-                    interpret(command, interfaceInstance, cursors, tmpCursor);
+                    interpret(command, interfaceInstance, cursors, cursor, variables);
+                    interpret(command, interfaceInstance, cursors, tmpCursor, variables);
                 } catch (Exception e) {
                     System.out.println("Error : one or more instructions invalid in MIRROR block");
                     cursors.removeCursor(tmpCursorId);
@@ -663,6 +709,80 @@ public class Interpreter {
             cursors.removeCursor(tmpCursorId);
         }
     }
+
+
+    private static void executeNum(String[] tokens, Interface interfaceInstance, MapVariable vars) {
+        try {
+            String newId = tokens[1];
+            if(vars.containsKey(newId)){
+                throw new IllegalArgumentException();
+            }
+            Num newVar = null;
+            if(tokens.length == 2) {
+                newVar = new Num(newId, 0.0);
+
+            } else {
+                double val = Double.parseDouble(tokens[3]);
+                newVar = new Num(newId,val);
+            }
+            vars.addVariable(newVar);
+
+        } catch (NumberFormatException e) {
+            interfaceInstance.Console.appendText("Error: Invalid input\n");
+        }catch (IllegalArgumentException e){
+            interfaceInstance.addHistory("The variable "+tokens[1]+" already exists",Color.RED);
+        }
+    }
+
+    private static void executeStr(String[] tokens, Interface interfaceInstance, MapVariable vars) {
+        try {
+            String newId = tokens[1];
+            if(vars.containsKey(newId)){
+                throw new IllegalArgumentException();
+            }
+            Str newVar = null;
+            if(tokens.length == 2) {
+                newVar = new Str(newId,"");
+            } else {
+                newVar = new Str(newId,tokens[3]);
+            }
+            vars.addVariable(newVar);
+        } catch (NumberFormatException e) {
+            interfaceInstance.Console.appendText("Error: Invalid input\n");
+        }catch (IllegalArgumentException e){
+            interfaceInstance.addHistory("The variable "+tokens[1]+" already exists",Color.RED);
+        }
+    }
+
+    private static void executeBool(String[] tokens, Interface interfaceInstance, MapVariable vars) {
+        try {
+            String newId = tokens[1];
+            if(vars.containsKey(newId)){
+                throw new IllegalArgumentException();
+            }
+            Bool newVar = null;
+            if(tokens.length == 2) {
+                newVar = new Bool(newId,false);
+            } else {
+                boolean val = Boolean.parseBoolean(tokens[3]);
+                newVar = new Bool(newId,val);
+            }
+            vars.addVariable(newVar);
+
+        } catch (NumberFormatException e) {
+            interfaceInstance.Console.appendText("Error: Invalid input\n");
+        } catch (IllegalArgumentException e){
+            interfaceInstance.addHistory("The variable "+tokens[1]+" already exists",Color.RED);
+        }
+    }
+
+    private static void executeDel(String[] tokens, Interface interfaceInstance, MapVariable vars) {
+        try{
+            String varName = tokens[1];
+            vars.removeVariable(varName);
+        }
+        catch (IllegalArgumentException e){
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+        }
+    }
 }
-
-

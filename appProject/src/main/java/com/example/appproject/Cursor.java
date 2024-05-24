@@ -162,6 +162,39 @@ public class Cursor {
         lookAt(lookAt_x,lookAt_y);
     }
 
+    /**
+     * Creates a new cursor symmetrical to the selected cursor by the symmetrical axis contaning the points (x1,y1) and
+     * (x2,y2).
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     * @param cursors
+     * @return A new Cursor symmetrical to the selected cursor (this)
+     */
+
+    public Cursor createMirrorAxis(int x1, int y1, int x2, int y2, MapCursor cursors) {
+
+        int cursorSymId = cursors.smallestAvailableId();
+        Cursor cursorSym = new Cursor (cursorSymId);
+        cursorSym.duplicate(this);
+        cursorSym.setDirection(180 + this.getDirection());
+        double deltaX = x2 - x1;
+        double deltaY = y2 - y1;
+        double theta = Math.atan2(deltaY, deltaX);  // Calculate angle of the line with the x-axis
+
+        double cos2Theta = Math.cos(2 * theta);
+        double sin2Theta = Math.sin(2 * theta);
+
+        int newX = (int) Math.round(this.getPositionX() * cos2Theta + this.getPositionY() * sin2Theta);
+        int newY = (int) Math.round(this.getPositionX() * sin2Theta - this.getPositionY() * cos2Theta);
+
+        this.positionX = newX;
+        this.positionY = newY;
+
+        return cursorSym;
+    }
+
     public double getOpacity() {
         return opacity;
     }
@@ -265,52 +298,6 @@ public class Cursor {
 
 
 
-    }
-
-    //Méthodes pour MIRROR version symétrie axiale
-
-    // sortie : le symétrique du curseur sélectionné
-    public Cursor createMirrorAxis(int x1, int y1, int x2, int y2, MapCursor cursors) {
-
-        int cursorSymId = cursors.smallestAvailableId();
-        Cursor cursorSym = new Cursor (cursorSymId);
-        cursorSym.duplicate(this);
-        cursorSym.setDirection(180 + this.getDirection());
-        try {
-            //The chosen cursor is its own image
-            if (2 * this.positionX - (x2 - x1) == 0 && 2 * this.positionY - (y2 - y1) == 0) {
-                return cursorSym;
-            } else {
-                double produitScalaire = (this.getPositionX() * (x2 - x1) + this.getPositionY() * (y2 - y1)) / 2;
-                double determinant = (this.getPositionX() * (y2 - y1) - this.getPositionY() * (x2 - x1)) / 2;
-
-                //The chosen cursor is on the line
-                if (determinant == 0) {
-                    //The chosen cursor is on the left and above the middle of [(x1,y1);(x2,y2)]
-                    if (produitScalaire > 0) {
-                        cursorSym.setPositionX((x2 - x1) - this.getPositionX());
-                        cursorSym.setPositionY((y2 - y1) - this.getPositionY());
-                    }
-                    //The chosen cursor is on the right and below
-                    else {
-                        cursorSym.setPositionX(this.getPositionX() - (x2 - x1));
-                        cursorSym.setPositionY(this.getPositionY() - (y2 - y1));
-                    }
-                } else {
-                    //The chosen cursor is not on the line
-                    double angle = produitScalaire / determinant;
-
-                    //Use rotation matrix to find the cursor's image
-                    int newX = (int) Math.round((this.getPositionX() * Math.cos(2 * angle) - this.getPositionY() * Math.sin(2 * angle)));
-                    int newY = (int) Math.round((this.getPositionX() * Math.sin(2 * angle) - this.getPositionY() * Math.cos(2 * angle)));
-                    cursorSym.setPositionX(newX);
-                    cursorSym.setPositionY(newY);
-                }
-            }
-        }
-        catch (OutOfPositionException e){}
-
-        return cursorSym;
     }
 
 }
