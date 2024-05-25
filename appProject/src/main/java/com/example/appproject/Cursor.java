@@ -17,7 +17,7 @@ public class Cursor {
     int positionY;
 
     //reprensents the angle, in degrees from the abscissa, pointed by the cursor
-    double direction;
+    float direction;
     int id;
     double thickness;
     double opacity;
@@ -121,12 +121,13 @@ public class Cursor {
     }
 
     /**
-     *  Turn the cursor by "angle" degrees, rotating counter clock-wise.
+     * Turn the cursor by "angle" degrees, rotating clock-wise.
      * The direction is supposed to be in degrees, between 0 and 359, the setDirection method assures that it is the case.
-     * The parameter "angle" could be a positive as well as a negative value in degrees.
+     * The angle is converted to a float value so the remainder operator % can handle it in setDirection method.
      */
     public void turn(double angle){
-        setDirection(getDirection() + angle);
+        float f_angle = (float) angle;
+        setDirection(getDirection() + f_angle);
     }
 
     /**
@@ -138,23 +139,51 @@ public class Cursor {
         double u = Math.abs(lookAt_x - getPositionX());
         double v = Math.abs(lookAt_y - getPositionY());
 
-        if (lookAt_x==getPositionX()) {
-            if (lookAt_y > getPositionY()){setDirection(90);}
-            else if (lookAt_y < getPositionY()){setDirection(270);}
+        if (lookAt_y==getPositionY()) {
+            if (lookAt_x > getPositionX()){setDirection(0);}
+            else if (lookAt_x < getPositionX()){setDirection(180);}
         }
         else {
-            setDirection(Math.toDegrees(Math.atan(v / u)));
-            System.out.println("angle rotation en radian : "+Math.atan(v/u)+"\nAngle en degrees : "+Math.toDegrees(Math.atan(v / u)));
+            /* Angle on selected cursor's side on the right-angle triangle composed of the selected cursor and
+               the targeted cursor.
+            */
+            float angle = (float) Math.toDegrees(Math.atan(u / v));
+            //System.out.println("angle rotation en radian : "+Math.atan(v/u)+"\nAngle en degrees : "+Math.toDegrees(Math.atan(v / u)));
+            //depending on where the cursor to look at is, we have to adapt the angle
+
+            //the half-plan on the right of the selected cursor
+            if (getPositionX()<=lookAt_x){
+                //Top right corner
+                if (getPositionY()>lookAt_y){
+                    setDirection(angle + 270);
+                }
+                //Bottom Right corner
+                else if (getPositionY()<lookAt_y) {
+                    setDirection(90-angle);
+                }
+            }
+            //the half plan on the left of the selected cursor
+            else if (getPositionX()>lookAt_x) {
+                //Top left corner
+                if (getPositionY()>lookAt_y){
+                    setDirection((90-angle) + 180);
+                }
+                //Bottom left corner
+                else if (getPositionY()<lookAt_y) {
+                    setDirection(angle+90);
+                }
+            }
+
         }
     }
 
     /**
      * Turns the cursor to point at the "modelCursor".
-     * @param modelCursor The cursor to point at.
+     * @param cursorToLookAt The cursor to point at.
      */
-    public void lookAt(Cursor modelCursor) throws IllegalArgumentException{
-        if (!modelCursor.equals(this)) {
-            lookAt(modelCursor.getPositionX(), modelCursor.getPositionY());
+    public void lookAt(Cursor cursorToLookAt) throws IllegalArgumentException{
+        if (!cursorToLookAt.equals(this)) {
+            lookAt(cursorToLookAt.getPositionX(), cursorToLookAt.getPositionY());
         }
         else {
             throw new IllegalArgumentException("Cursor can not look at itself");
@@ -162,8 +191,10 @@ public class Cursor {
     }
 
     public void lookAt(Percentage per_x, Percentage per_y, double width, double height){
-        int lookAt_x = (int) Math.floor(per_x.getValue()*width);
-        int lookAt_y = (int) Math.floor(per_y.getValue()*height);
+        int lookAt_x = (int) Math.round(per_x.getValue()*width);
+        //System.out.println("x à viser : "+lookAt_x);
+        int lookAt_y = (int) Math.round(per_y.getValue()*height);
+        //System.out.println("y à viser : "+lookAt_y);
         lookAt(lookAt_x,lookAt_y);
     }
 
@@ -224,16 +255,19 @@ public class Cursor {
         this.positionY = positionY;
     }
 
-    public double getDirection() {
+    public float getDirection() {
         return direction;
     }
 
     /**
      * The method checks if the angle from the abscissa is in degrees from 0 to 359, and sets the new value.
      */
-    public void setDirection(double direction) {
-        System.out.println("Angle : "+direction);
-        this.direction = direction % 360;
+    public void setDirection(float angle) throws IllegalArgumentException{
+        if (angle >= 0) {
+            this.direction = (angle % 360);
+            System.out.println("Angle : " + direction);
+        }
+        else {throw new IllegalArgumentException("Negative angle");}
     }
 
     public int getId() {
