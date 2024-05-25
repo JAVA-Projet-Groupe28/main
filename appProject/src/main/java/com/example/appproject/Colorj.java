@@ -13,49 +13,56 @@ public class Colorj {
         setRgbFromWeb(web);
     }
 
-    public Colorj(double red, double green, double blue) {
+    public Colorj(double red, double green, double blue){
         this.rgb_double[0] = red;
         this.rgb_double[1] = green;
         this.rgb_double[2] = blue;
         setRgbFromRgbDouble(red,green,blue);
     }
 
-    public Colorj(int red, int green, int blue)/* throws OutOfRangeRGBException*/ {
+    public Colorj(int red, int green, int blue) throws IllegalArgumentException {
         if (red >= 0 && red <= 255 && green >= 0 && green <= 255 && blue >= 0 && blue <= 255) {
             this.rgb[0] = red;
             this.rgb[1] = green;
             this.rgb[2] = blue;
         }
-        /*else throw new OutOfRangeRGBException("Couleurs non compris entre 0 et 255");*/
+        else throw new IllegalArgumentException("RGB color value has to be between 0 and 255.");
     }
 
 
     /**
      * Set the rgb attribute based on the web description of the color in hexa.
      * */
-    public void setRgbFromWeb(String webColor){
-        System.out.println("Color hexa :"+webColor);
+    public void setRgbFromWeb(String webColor) throws NumberFormatException{
+
+        //System.out.println("Color hexa :"+webColor);
         int red = Integer.parseInt(webColor.substring(1,3),16);
         int green = Integer.parseInt(webColor.substring(3,5),16);
         int blue = Integer.parseInt(webColor.substring(5,7),16);
-        System.out.println("RGB : "+red +" "+ green +" "+ blue);
+        //System.out.println("RGB : "+red +" "+ green +" "+ blue);
         setRgb(red,green,blue);
     }
 
     /**
      *Set the rgb value in integers from 0 to 255 of the color, from its rgb description in double value from 0 to 1.
      */
-    public void setRgbFromRgbDouble(double red_d, double green_d, double blue_d){
-        int red = (int) Math.round(red_d*255);
-        int green = (int) Math.round(green_d*255);
-        int blue = (int) Math.round(blue_d*255);
-        setRgb(red,green,blue);
+    public void setRgbFromRgbDouble(double red_d, double green_d, double blue_d) throws IllegalArgumentException{
+        if (red_d <= 1.0 && red_d >= 0 && green_d <= 1.0 && green_d >= 0 && blue_d <= 1.0 && blue_d >= 0) {
+            int red = (int) Math.round(red_d * 255);
+            int green = (int) Math.round(green_d * 255);
+            int blue = (int) Math.round(blue_d * 255);
+            setRgb(red, green, blue);
+        }
+        else {throw new IllegalArgumentException("RGB color value has to between 0 and 1.");}
     }
 
-    public void setRgb(int red, int green, int blue) {
-        this.rgb[0] = red;
-        this.rgb[1] = green;
-        this.rgb[2] = blue;
+    public void setRgb(int red, int green, int blue) throws IllegalArgumentException {
+        if (red >= 0 && red <= 255 && green >= 0 && green <= 255 && blue >= 0 && blue <= 255) {
+            this.rgb[0] = red;
+            this.rgb[1] = green;
+            this.rgb[2] = blue;
+        }
+        else throw new IllegalArgumentException("RGB color value has to be between 0 and 255.");
     }
 
     public int[] getRgb() {

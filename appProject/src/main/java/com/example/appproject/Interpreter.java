@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.scene.paint.Color;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
@@ -48,13 +49,14 @@ public class Interpreter {
      * @param variables Map of existing variables.
      */
 
-    public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
+    public static void interpret(String input, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) throws RuntimeException {
+
         List<String> instructions = splitCommand(input);
         interfaceInstance.addHistory(String.valueOf(interfaceInstance.isChecked),Color.RED);
 
-        // Vérifier s'il y a des instructions à exécuter
+
         if (instructions.isEmpty()) {
-            return; // Sortir de la méthode si aucune instruction
+            return;
         }
         stop = false;
         Timeline timeline = new Timeline();
@@ -70,9 +72,14 @@ public class Interpreter {
                 try {
                     executeInstruction(currentInstruction, interfaceInstance, cursors, cursor, variables);
                 } catch (Exception e) {
-                    interfaceInstance.addHistory("Error executing command: " + currentInstruction, Color.RED);
+
+
+                    String error = "Error executing command: " + currentInstruction +" "+ e;
+                    interfaceInstance.addHistory("Error executing command: " + currentInstruction +" "+ e.getMessage(), Color.RED);
                     e.printStackTrace();
                     stop = true; // Stop processing further instructions
+                    throw new RuntimeException(error);
+
                 }
             });
             pause.play();
@@ -84,56 +91,63 @@ public class Interpreter {
 
 
 
-    private static void executeInstruction(String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
+    private static void executeInstruction(String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) throws Exception {
         try {
 
                 String[] tokens = instruction.split(" ");
                 switch (tokens[0]) {
                     case "FWD":
                         executeFwd(tokens, interfaceInstance, cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1], Color.BLACK);
                         break;
                     case "BWD":
                         executeBwd(tokens, interfaceInstance, cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1], Color.BLACK);
                         break;
                     case "TURN":
                         cursor.turn(Double.parseDouble(tokens[1]));
                         interfaceInstance.moveCursor(cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1], Color.BLACK);
                         break;
                     case "COLOR":
                         applyColor(tokens, interfaceInstance, cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        if (tokens.length == 2) {
+                            interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " +
+                                    tokens[1], Color.BLACK);
+                        }
+                        else if (tokens.length == 4){
+                            interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " +
+                                    tokens[1] + " " + tokens[2] + " " + tokens[3], Color.BLACK);
+                        }
                         break;
                     case "THICK":
                         cursor.setThickness(Double.parseDouble(tokens[1]));
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1], Color.BLACK);
                         break;
                     case "PRESS":
                         cursor.setOpacity(Double.parseDouble(tokens[1]));
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1], Color.BLACK);
                         break;
                     case "MOV":
                         executeMove(tokens, interfaceInstance, cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1] + " " + tokens[2], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1] + " " + tokens[2], Color.BLACK);
                         break;
                     case "POS":
                         executePos(tokens, interfaceInstance, cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1] + " " + tokens[2], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1] + " " + tokens[2], Color.BLACK);
                         break;
                     case "LOOKAT":
                         System.out.println("lookat command" + tokens[0] + tokens[1]);
                         executeLookAt(tokens, interfaceInstance, cursors, cursor);
-                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + tokens[1], Color.BLACK);
+                        interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0] + " " + tokens[1], Color.BLACK);
                         break;
                     case "HIDE":
-                        cursor.setHidden(false);
+                        cursor.setVisible(false);
                         interfaceInstance.moveCursor(cursor);
                         interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0], Color.BLACK);
                         break;
                     case "SHOW":
-                        cursor.setHidden(true);
+                        cursor.setVisible(true);
                         interfaceInstance.drawCursor(cursor);
                         interfaceInstance.addHistory("Cursor " + cursor.getId() + " : " + tokens[0], Color.BLACK);
                         break;
@@ -190,8 +204,8 @@ public class Interpreter {
 
             }
          catch (IllegalArgumentException e) {
-
             stop=true;
+            throw new Exception(e.getMessage());
         }
     }
 
@@ -205,14 +219,14 @@ public class Interpreter {
      * @param interfaceInstance
      * @param cursor
      */
-    private static void executeFwd(String[] tokens, Interface interfaceInstance, Cursor cursor) {
+    private static void executeFwd(String[] tokens, Interface interfaceInstance, Cursor cursor) throws Exception {
         try {
             int distance;
 
             /*
-            * If the user enters a percentage, it adapts the forward method so the distance is the percentage of
-            * the largest dimension of the canvas between width and height.
-            */
+             * If the user enters a percentage, it adapts the forward method so the distance is the percentage of
+             * the largest dimension of the canvas between width and height.
+             */
             if (tokens[1].endsWith("%")) {
                 Percentage distance_per = new Percentage(tokens[1]);
                 double dimension = Math.max(interfaceInstance.getDrawingPaneWidth(), interfaceInstance.getDrawingPaneHeight());
@@ -224,21 +238,24 @@ public class Interpreter {
             if (cursor != null) {
                 int tempX = cursor.getPositionX();
                 int tempY = cursor.getPositionY();
-                
-                interfaceInstance.checkPosition(tempX+distance * Math.cos(Math.toRadians(cursor.getDirection())),tempY+ distance * Math.sin(Math.toRadians(cursor.getDirection())));
+
+                interfaceInstance.checkPosition(tempX + distance * Math.cos(Math.toRadians(cursor.getDirection())), tempY + distance * Math.sin(Math.toRadians(cursor.getDirection())));
                 cursor.forward(distance);
                 interfaceInstance.checkPosition(cursor.getPositionX(), cursor.getPositionY());
                 interfaceInstance.moveCursor(cursor);
                 interfaceInstance.drawLine(tempX, tempY, cursor.getPositionX(), cursor.getPositionY(), cursor.getThickness(),
-                        cursor.getColorj().getRgb()[0], cursor.getColorj().getRgb()[1], cursor.getColorj().getRgb()[2],cursor.getOpacity());
+                        cursor.getColorj().getRgb()[0], cursor.getColorj().getRgb()[1], cursor.getColorj().getRgb()[2], cursor.getOpacity());
 
             }
         } catch (NumberFormatException e) {
-            // Handle invalid number format
-            e.getMessage();
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
+        } catch (IllegalArgumentException e){
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
         } catch (OutOfPositionException e) {
-            // Handle out of position exception
-            e.getMessage();
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
         }
     }
 
@@ -247,7 +264,7 @@ public class Interpreter {
      * It moves the cursor following its direction by the "distance" entered by the user.
      * It takes into account if the user entered a percentage, symbolized with a '%' or not.
      */
-    private static void executeBwd(String[] tokens, Interface interfaceInstance, Cursor cursor) {
+    private static void executeBwd(String[] tokens, Interface interfaceInstance, Cursor cursor) throws Exception {
         try {
             int distance;
             if (tokens[1].endsWith("%")) {
@@ -268,10 +285,14 @@ public class Interpreter {
                         cursor.getColorj().getRgb()[0], cursor.getColorj().getRgb()[1], cursor.getColorj().getRgb()[2], cursor.getOpacity());
             }
         } catch (NumberFormatException e) {
-            // Handle invalid number format
-            e.getMessage();
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
+        } catch (IllegalArgumentException e){
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
         } catch (OutOfPositionException e) {
-            // Handle out of position exception
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
         }
     }
 
@@ -279,7 +300,7 @@ public class Interpreter {
      * Executes the POS (position) instruction.
      * It changes the coordinates of the selected cursor to values entered as arguments.
      */
-    private static void executePos(String[] tokens, Interface interfaceInstance, Cursor cursor) {
+    private static void executePos(String[] tokens, Interface interfaceInstance, Cursor cursor) throws Exception {
         if (cursor != null) {
             try {
 
@@ -305,7 +326,15 @@ public class Interpreter {
                     cursor.setPositionY(Integer.parseInt(tokens[2]));
                 }
                 interfaceInstance.moveCursor(cursor);
+            } catch (NumberFormatException e) {
+                interfaceInstance.addHistory(e.getMessage(), Color.RED);
+                throw new Exception(e.getMessage());
+            } catch (IllegalArgumentException e){
+                interfaceInstance.addHistory(e.getMessage(), Color.RED);
+                throw new Exception(e.getMessage());
             } catch (OutOfPositionException e) {
+                interfaceInstance.addHistory(e.getMessage(), Color.RED);
+                throw new Exception(e.getMessage());
             }
 
         }
@@ -315,14 +344,14 @@ public class Interpreter {
      * Executes the MOV (move) instruction.
      * As executePos() but it draws the line between the last position of the cursor and the new one.
      */
-    private static void executeMove(String[] tokens, Interface interfaceInstance, Cursor cursor) {
+    private static void executeMove(String[] tokens, Interface interfaceInstance, Cursor cursor) throws Exception {
         if (cursor != null) {
             int tempX = cursor.getPositionX();
             int tempY = cursor.getPositionY();
             try {
                 interfaceInstance.checkPosition(tempX,tempY);
             } catch (OutOfPositionException e) {
-
+                interfaceInstance.addHistory(e.getMessage(),Color.RED);
             }
 
             executePos(tokens, interfaceInstance, cursor);
@@ -337,7 +366,7 @@ public class Interpreter {
      * The coordinates as integers, a cursor ID as an integer or the abscissa and ordinate in percentages of the canvas.
      * @param mapCursor The Map of cursors is needed when the selected cursor is asked to look at another cursor.
      */
-    private static void executeLookAt(String[] tokens, Interface interfaceInstance, MapCursor mapCursor, Cursor cursor) {
+    private static void executeLookAt(String[] tokens, Interface interfaceInstance, MapCursor mapCursor, Cursor cursor) throws Exception {
         try {
             if (tokens.length == 2) {
                 Cursor cursorToLookAt = mapCursor.getCursorById(Integer.parseInt(tokens[1]));
@@ -360,8 +389,12 @@ public class Interpreter {
             }
             interfaceInstance.moveCursor(cursor);
         }
-        catch (IllegalArgumentException e){
+        catch (NumberFormatException e) {
             interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
+        } catch (IllegalArgumentException e){
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
         }
     }
 
@@ -375,46 +408,65 @@ public class Interpreter {
      * RGB format and not (255,255,255). (255,255,255) can be applied with (1.0,1.0,1.0) for example, or as long as
      * at least a double number is called (example (1.0,1,1) also works).
      */
-    ///Gerer les exceptions, notamment double >1, rgb <0 et >255 ...
-    private static void applyColor(String tokens[], Interface interfaceInstance, Cursor cursor) {
-        if (tokens.length == 2) {
-            //Web format : #RRGGBB
-            cursor.setColor(tokens[1]);
-        } else {
-            if (tokens[1].contains(".") || tokens[2].contains(".") || tokens[3].contains(".")) {
-                //double value from 0 to 1
-                double red = Double.parseDouble(tokens[1]);
-                double green = Double.parseDouble(tokens[2]);
-                double blue = Double.parseDouble(tokens[3]);
-                cursor.setColor(red, green, blue);
+    private static void applyColor(String tokens[], Interface interfaceInstance, Cursor cursor) throws Exception {
+        try {
+            if (tokens.length == 2) {
+                //Web format : #RRGGBB
+                cursor.setColor(tokens[1]);
             } else {
-                //int values from 0 to 255
-                int red = Integer.parseInt(tokens[1]);
-                int green = Integer.parseInt(tokens[2]);
-                int blue = Integer.parseInt(tokens[3]);
-                cursor.setColor(red, green, blue);
+                if (tokens[1].contains(".") || tokens[2].contains(".") || tokens[3].contains(".")) {
+                    //double value from 0 to 1
+                    double red = Double.parseDouble(tokens[1]);
+                    double green = Double.parseDouble(tokens[2]);
+                    double blue = Double.parseDouble(tokens[3]);
+                    cursor.setColor(red, green, blue);
+                } else {
+                    //int values from 0 to 255
+                    int red = Integer.parseInt(tokens[1]);
+                    int green = Integer.parseInt(tokens[2]);
+                    int blue = Integer.parseInt(tokens[3]);
+                    cursor.setColor(red, green, blue);
+                }
             }
+            interfaceInstance.moveCursor(cursor);
+        } catch (NumberFormatException e){
+            interfaceInstance.addHistory(e.getMessage(),Color.RED);
+            throw new Exception(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            interfaceInstance.addHistory(e.getMessage(), Color.RED);
+            throw new Exception(e.getMessage());
         }
-        interfaceInstance.moveCursor(cursor);
     }
 
-    private static void executeCursor(String[] tokens, Interface interfaceInstance, MapCursor cursors) {
+    /**
+     * Executes the CURSOR instruction by creating a Cursor Object and displaying it on the drawing area.
+     * The new Cursor is placed at the center of the drawing area.
+     * @param tokens
+     * @param interfaceInstance
+     * @param cursors
+     * @throws Exception
+     */
+    private static void executeCursor(String[] tokens, Interface interfaceInstance, MapCursor cursors) throws Exception {
         try {
             int cursorId = Integer.parseInt(tokens[1]);
             Cursor existingCursor = cursors.getCursorById(cursorId);
             if (existingCursor != null) {
-                interfaceInstance.addHistory("Error: Cursor with ID " + cursorId + " already exists",Color.RED);
-                return;
+                throw new Exception("Error: Cursor with ID " + cursorId + " already exists.");
             }
             Cursor newCursor = new Cursor(cursorId);
+            //A new cursor is by default in X=0, Y = 0. We position it at the center of the drawing Pane for convenience.
+            newCursor.position(new Percentage(0.5),new Percentage(0.5), (int) interfaceInstance.getDrawingPaneWidth(), (int) interfaceInstance.getDrawingPaneHeight());
             cursors.addCursor(newCursor);
             interfaceInstance.drawCursor(newCursor);
         } catch (NumberFormatException e) {
-            interfaceInstance.addHistory("Error: Invalid input to create a Cursor",Color.RED);
+            throw new Exception("Error: Invalid input to create a Cursor.");
+        }
+        catch (Exception e){
+            throw new Exception(e);
         }
     }
 
-    private static void handleForLoop(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
+    private static void handleForLoop(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) throws Exception {
         try {
 
 
@@ -474,14 +526,17 @@ public class Interpreter {
             interfaceInstance.addHistory("Error: Invalid FOR loop syntax",Color.RED);
         }
         }catch (IllegalArgumentException e){
-            interfaceInstance.addHistory("Error : variable "+tokens[1]+" already exist",Color.RED);
+            throw new Exception("Error : variable "+tokens[1]+" already exist");
+        } catch (Exception e) {
+            throw new Exception(e);
         }
     }
 
-    private static void executeIf(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
+    private static void executeIf(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) throws Exception {
+        try {
+
         if (tokens.length < 2) {
-            interfaceInstance.addHistory("Error : Invalid IF syntax",Color.RED);
-            return;
+            throw new IllegalAccessException("Error : Invalid IF syntax");
         }
         String condition = instruction.substring(instruction.indexOf("IF") + 3, instruction.indexOf('{')).trim();
         String block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}")).trim();
@@ -490,6 +545,9 @@ public class Interpreter {
             for (String command : commands) {
                 interpret(command, interfaceInstance, cursors, cursor, variables);
             }
+        }
+        } catch (IllegalArgumentException e) {
+            throw new Exception(e);
         }
     }
 
@@ -576,7 +634,7 @@ public class Interpreter {
     }
 
 
-    private static void executeWhile(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
+    private static void executeWhile(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) throws Exception {
         if (tokens.length < 2) {
             interfaceInstance.addHistory("Error : Invalid While syntax",Color.RED);
             return;
@@ -616,7 +674,7 @@ public class Interpreter {
         return intsructionSplit;
     }
 
-    private static void executeMimic(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) {
+    private static void executeMimic(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor, MapVariable variables) throws Exception {
         if (tokens.length < 2) {
             interfaceInstance.addHistory("Error : Invalid Mimic syntax",Color.RED);
             return;
@@ -645,7 +703,7 @@ public class Interpreter {
                 interpret(command, interfaceInstance, cursors, cursors.getCursorById(modelCursorId),variables);
                 interpret(command, interfaceInstance, cursors, tmpCursor,variables);
             } catch (Exception e) {
-                System.out.println("Error : one or more instructions invalid in MIMIC block");
+                interfaceInstance.addHistory("Error : one or more instructions invalid in MIMIC block",Color.RED);
                 cursors.removeCursor(tmpCursorId);
             }
         }
@@ -655,7 +713,7 @@ public class Interpreter {
 
     //TODO : MIRROR axial
 
-    private static void executeMirror(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) {
+    private static void executeMirror(String[] tokens, String instruction, Interface interfaceInstance, MapCursor cursors, Cursor cursor,MapVariable variables) throws Exception {
         //central symmetry
         if (tokens[3].contains("{")) {
             double symetryPointX;
@@ -684,28 +742,32 @@ public class Interpreter {
 
             //Applying symmetry
             try {
-                tmpCursor.setPositionX((int) Math.round(2*symetryPointX - cursor.getPositionX()));
-                tmpCursor.setPositionY((int) Math.round(2*symetryPointY - cursor.getPositionY()));
+                tmpCursor.setPositionX((int) Math.round(2 * symetryPointX - cursor.getPositionX()));
+                tmpCursor.setPositionY((int) Math.round(2 * symetryPointY - cursor.getPositionY()));
                 tmpCursor.turn(180);
                 interfaceInstance.drawCursor(tmpCursor);
-                String block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}")).trim();
-                List<String> commands = splitCommand(block);
-                for (String command : commands) {
+                String Block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
+
+                try {
                     /*
-                     * First executes the command for the targeted cursor and then the temporary one. Commands by commands
-                     * in the block
+                     * Exécute d'abord la commande pour le curseur ciblé, puis pour celui temporaire. Commande par commande
+                     * dans le bloc
                      */
-                    interfaceInstance.addHistory("Début du bloc : " + command, Color.RED);
-                    interpret(command, interfaceInstance, cursors, cursor, variables); // Original cursor
-                    interfaceInstance.addHistory("Cursor original position: " + cursor.getPositionX() + ", " + cursor.getPositionY(), Color.BLUE);
-                    interpret(command, interfaceInstance, cursors, tmpCursor, variables); // Temporary cursor
-                    interfaceInstance.addHistory("Cursor original position: " + cursor.getPositionX() + ", " + cursor.getPositionY(), Color.BLUE);
-                    interfaceInstance.addHistory("Cursor temporaire position: " + tmpCursor.getPositionX() + ", " + tmpCursor.getPositionY(), Color.GREEN);
-                    interfaceInstance.addHistory("Fin du bloc", Color.RED);
+                    interpret(Block, interfaceInstance, cursors, cursor, variables);
+                    interpret(Block, interfaceInstance, cursors, tmpCursor, variables);
+
+
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Erreur : une ou plusieurs instructions invalides dans le bloc MIRROR");
+                    cursors.removeCursor(tmpCursorId);
                 }
-                interfaceInstance.removeCursor(tmpCursor);
+
+                interfaceInstance.addHistory(String.valueOf(tmpCursorId),Color.BURLYWOOD);
+                cursors.removeCursor(tmpCursorId);
+                interfaceInstance.addHistory("LCKCLFGRLFOGK",Color.BURLYWOOD);
+
             } catch (OutOfPositionException e) {
-                interfaceInstance.addHistory("error : symetry",Color.RED);
+                interfaceInstance.addHistory("Error Pos in mirror",Color.RED);
             }
         }
 
@@ -713,7 +775,7 @@ public class Interpreter {
         else if (tokens[5].contains("{")) {
 
             //Coordinates of the symmetry axis
-            int x1,y1,x2,y2;
+            int x1, y1, x2, y2;
 
             //Managing the parameters in percentages
             if (tokens[1].endsWith("%") && tokens[2].endsWith("%") && tokens[3].endsWith("%") && tokens[4].endsWith("%")) {
@@ -737,26 +799,12 @@ public class Interpreter {
                 y2 = Integer.parseInt(tokens[4]);
             }
 
-            interfaceInstance.drawLine(x1,y1,x2,y2,2,0,0,0,1);
+            interfaceInstance.drawLine(x1, y1, x2, y2, 2, 0, 0, 0, 1);
 
             Cursor tmpCursor;
             tmpCursor = cursor.createMirrorAxis(x1, y1, x2, y2, cursors);
             int tmpCursorId = tmpCursor.getId();
 
-            interfaceInstance.drawCursor(tmpCursor);
-            String Block = instruction.substring(instruction.indexOf("{") + 1, instruction.lastIndexOf("}"));
-
-                try {
-                    /*
-                     * Exécute d'abord la commande pour le curseur ciblé, puis pour celui temporaire. Commande par commande
-                     * dans le bloc
-                     */
-                    interpret(Block, interfaceInstance, cursors, cursor, variables);
-                    interpret(Block, interfaceInstance, cursors, tmpCursor, variables);
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Erreur : une ou plusieurs instructions invalides dans le bloc MIRROR");
-                    cursors.removeCursor(tmpCursorId);
-                }
             cursors.removeCursor(tmpCursorId);
         }
     }

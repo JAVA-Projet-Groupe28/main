@@ -12,16 +12,45 @@ import java.util.Objects;
 public class Cursor {
 
     //TODO : documentation
-
+    /**
+     * The coordinate on the abscissa axis.
+     */
     int positionX;
+    /**
+     * The coordinate on the ordinate axis.
+     */
     int positionY;
 
-    //reprensents the angle, in degrees from the abscissa, pointed by the cursor
-    double direction;
+    /**
+     * The attribute representing the angle, in degrees from the abscissa, pointed by the cursor
+     */
+    float direction;
+    
+    /**
+     * The id used in the Class MapCursor as a Key.
+     */
     int id;
+
+    /**
+     * The attribute representing the length of the trail traced by the cursor.
+     */
     double thickness;
+
+    /**
+     * The intensity of the marking leaved by the cursor.
+     */
     double opacity;
-    boolean hidden;
+
+    /**
+     * The attribute representing the visibility by the user of the cursor. If true, the cursor is appearing in the drawing
+     * area interface.
+     */
+    boolean visible;
+
+    /**
+     * The Colorj object representing the color of the cursor and the color of the trail.
+     * The color can be determined with multiple formats, web or rgb.
+     */
     Colorj color;
 
 
@@ -33,33 +62,38 @@ public class Cursor {
     public Cursor(int id) {
         this.id = id;
 
-        this.positionX = 500;
-        this.positionY = 200;
+        this.positionX = 0;
+        this.positionY = 0;
         this.direction = 0;
         this.thickness = 3;
         this.opacity = 1;
-        this.hidden = true;
+        this.visible = true;
         this.color = new Colorj(0,0,0);
     }
-    public Cursor(int positionX, int positionY, float direction, int id, double thickness, boolean hidden, Colorj color, double opacity) {
+
+    public Cursor(int positionX, int positionY, float direction, int id, double thickness, boolean visible, Colorj color, double opacity) {
         this.positionX = positionX;
         this.positionY = positionY;
         this.direction = direction;
         this.id = id;
         this.thickness = thickness;
         this.opacity = opacity;
-        this.hidden = hidden;
+        this.visible = visible;
         this.color = color;
     }
 
-    public void duplicate(Cursor modelCursor){
-        this.positionX = modelCursor.getPositionX();
-        this.positionY = modelCursor.getPositionY();
-        this.direction = modelCursor.getDirection();
-        this.thickness = modelCursor.getThickness();
-        this.opacity = modelCursor.getOpacity();
-        this.hidden = modelCursor.hidden;
-        this.color = modelCursor.getColorj();
+    /**
+     * Change the attributes of this cursor to copy those of modelCursor.
+     * @param modelCursor
+     */
+    public void duplicate(Cursor modelCursor) throws OutOfPositionException{
+        setPositionX(modelCursor.getPositionX());
+        setPositionY(modelCursor.getPositionY());
+        setDirection(modelCursor.getDirection());
+        setThickness(modelCursor.getThickness());
+        setOpacity(modelCursor.getOpacity());
+        setVisible(modelCursor.isVisible());
+        setColor(modelCursor.getColorj().getRgb()[0],modelCursor.getColorj().getRgb()[1],modelCursor.getColorj().getRgb()[2]);
     }
 
     /**
@@ -86,7 +120,7 @@ public class Cursor {
     }
 
     /**
-     * The forward method move the cursor by "distance" pixels, following the direction it is headed on, which is
+     * The forward method move the cursor by "distance" pixels, following the direction the cursor is headed on, which is
      * the "direction" angle from the abscissa.
      * @param distance
      */
@@ -121,12 +155,13 @@ public class Cursor {
     }
 
     /**
-     *  Turn the cursor by "angle" degrees, rotating counter clock-wise.
+     * Turn the cursor by "angle" degrees, rotating clock-wise.
      * The direction is supposed to be in degrees, between 0 and 359, the setDirection method assures that it is the case.
-     * The parameter "angle" could be a positive as well as a negative value in degrees.
+     * The angle is converted to a float value so the remainder operator % can handle it in setDirection method.
      */
     public void turn(double angle){
-        setDirection(getDirection() + angle);
+        float f_angle = (float) angle;
+        setDirection(getDirection() + f_angle);
     }
 
     /**
@@ -138,13 +173,42 @@ public class Cursor {
         double u = Math.abs(lookAt_x - getPositionX());
         double v = Math.abs(lookAt_y - getPositionY());
 
-        if (lookAt_x==getPositionX()) {
-            if (lookAt_y > getPositionY()){setDirection(90);}
-            else if (lookAt_y < getPositionY()){setDirection(270);}
+        if (lookAt_y==getPositionY()) {
+            if (lookAt_x > getPositionX()){setDirection(0);}
+            else if (lookAt_x < getPositionX()){setDirection(180);}
         }
         else {
-            setDirection(Math.toDegrees(Math.atan(v / u)));
-            System.out.println("angle rotation en radian : "+Math.atan(v/u)+"\nAngle en degrees : "+Math.toDegrees(Math.atan(v / u)));
+            /* Angle on selected cursor's side on the right-angle triangle composed of the selected cursor and
+               the targeted cursor.
+            */
+            float angle = (float) Math.toDegrees(Math.atan(u / v));
+            //System.out.println("angle rotation en radian : "+Math.atan(v/u)+"\nAngle en degrees : "+Math.toDegrees(Math.atan(v / u)));
+
+            //depending on where the cursor to look at is, we have to adapt the angle
+
+            //the half-plan on the right of the selected cursor
+            if (getPositionX()<=lookAt_x){
+                //Top right corner
+                if (getPositionY()>lookAt_y){
+                    setDirection(angle + 270);
+                }
+                //Bottom Right corner
+                else if (getPositionY()<lookAt_y) {
+                    setDirection(90-angle);
+                }
+            }
+            //the half plan on the left of the selected cursor
+            else if (getPositionX()>lookAt_x) {
+                //Top left corner
+                if (getPositionY()>lookAt_y){
+                    setDirection((90-angle) + 180);
+                }
+                //Bottom left corner
+                else if (getPositionY()<lookAt_y) {
+                    setDirection(angle+90);
+                }
+            }
+
         }
     }
 
@@ -177,8 +241,7 @@ public class Cursor {
      * @param cursors
      * @return A new Cursor symmetrical to the selected cursor (this)
      */
-
-    public Cursor createMirrorAxis(int x1, int y1, int x2, int y2, MapCursor cursors) {
+    public Cursor createMirrorAxis(int x1, int y1, int x2, int y2, MapCursor cursors) throws OutOfPositionException,NumberFormatException{
 
         int cursorSymId = cursors.smallestAvailableId();
         Cursor cursorSym = new Cursor (cursorSymId);
@@ -224,16 +287,19 @@ public class Cursor {
         this.positionY = positionY;
     }
 
-    public double getDirection() {
-        return direction;
+    public float getDirection() {
+        return this.direction;
     }
 
     /**
      * The method checks if the angle from the abscissa is in degrees from 0 to 359, and sets the new value.
      */
-    public void setDirection(double direction) {
-        System.out.println("Angle : "+direction);
-        this.direction = direction % 360;
+    public void setDirection(float angle) throws IllegalArgumentException{
+        if (angle >= 0) {
+            this.direction = (angle % 360);
+            System.out.println("Angle : " + direction);
+        }
+        else {throw new IllegalArgumentException("Negative angle.");}
     }
 
     public int getId() {
@@ -252,34 +318,37 @@ public class Cursor {
         this.thickness = thickness;
     }
 
-    public boolean isHidden() {
-        return hidden;
+    /**
+     * isVisible() is the getter for the attribute Cursor.visible.
+     * */
+    public boolean isVisible() {
+        return visible;
     }
 
-    public void setHidden(boolean hidden) {
-        this.hidden = hidden;
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 
     public Colorj getColorj() {
         return this.color;
     }
 
-    public void setColor(String webColor){
+    public void setColor(String webColor) throws NumberFormatException{
         this.color.setRgbFromWeb(webColor);
     }
 
-    public void setColor(int red, int green, int blue){
+    public void setColor(int red, int green, int blue) throws IllegalArgumentException{
         this.color.setRgb(red,green,blue);
     }
 
-    public void setColor(double red, double green, double blue){
+    public void setColor(double red, double green, double blue) throws IllegalArgumentException{
         this.color.setRgbFromRgbDouble(red,green,blue);
     }
 
     @Override
     public String toString() {
         return String.format("Cursor %d  X:%d Y:%d hidden=%b dir:%.2f thick:%.2f Press:%.2f,"+this.color.toString(),
-                id,positionX, positionY,hidden, direction,  thickness, opacity);
+                id,positionX, positionY,visible, direction,  thickness, opacity);
     }
     @Override
     public boolean equals(Object obj) {
@@ -292,17 +361,6 @@ public class Cursor {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    public boolean isVisible(){
-        boolean b = this.hidden;
-        if (this.hidden) {
-            return true;
-        }
-        else {return false;}
-
-
-
     }
 
 }

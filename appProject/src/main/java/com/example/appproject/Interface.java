@@ -51,7 +51,6 @@ public class Interface extends Application {
 
     //TODO : documentation
 
-    //TODO (facu) : liste des variables ListView<Variable>
 
     //TODO : Importer un fichier texte
 
@@ -272,7 +271,6 @@ public class Interface extends Application {
      * @param cursor
      */
     protected void moveCursor(Cursor cursor) {
-        // Remove old cursor visual representation
         removeCursorVisual(cursor);
 
         // Update the cursor position in the ListView
@@ -302,10 +300,15 @@ public class Interface extends Application {
      * @param cursorToRemove
      */
     protected void removeCursor(Cursor cursorToRemove) {
-        mapCursor.removeCursor(cursorToRemove.getId());
-        cursorListView.getItems().remove(cursorToRemove);
-        removeCursorVisual(cursorToRemove);
+
+
+            mapCursor.removeCursor(cursorToRemove.getId());
+            cursorListView.getItems().remove(cursorToRemove);
+            addHistory("cursor Delet",Color.ROSYBROWN);
+            removeCursorVisual(cursorToRemove);
+
     }
+
 
     /**
      * Draws a line from a position to another, with the specified color and width.
@@ -363,7 +366,11 @@ public class Interface extends Application {
     @FXML
     public void scan(){
         String instruction = Console.getText();
-        Interpreter.interpret(instruction,this,mapCursor,mapCursor.getCursorById(selectedCursorId),mapVariable);
+        try {
+            Interpreter.interpret(instruction,this,mapCursor,mapCursor.getCursorById(selectedCursorId),mapVariable);
+        } catch (Exception e) {
+
+        }
     }
     @FXML
     public void openFile() {
@@ -383,7 +390,6 @@ public class Interface extends Application {
             try {
                 scanFile(selectedFile);
             } catch (IOException e) {
-                // Gérer l'exception ici
                 System.err.println("Error while reading the file: " + e.getMessage());
                 addHistory("Error reading the file", Color.RED);
             }
@@ -400,20 +406,32 @@ public class Interface extends Application {
             boolean stop =false;
             String line;
             Timeline timeline = new Timeline();
-            int index = 1;
+            int index = 0;
+            int numLine=0;
             while ((line = br.readLine()) != null) {
                 if(stop && !this.isChecked){
                     break;
                 }
-                PauseTransition pause = new PauseTransition(Duration.millis(executeTime * index));
-                String finalLine = line;
-                pause.setOnFinished(event -> {
+                try {
 
-                    Interpreter.interpret(finalLine,this,mapCursor,mapCursor.getCursorById(selectedCursorId),mapVariable);
 
-                });
-                pause.play();
-                index++ ;
+                    numLine++;
+                    PauseTransition pause = new PauseTransition(Duration.millis(executeTime * index));
+                    String finalLine = line;
+                    pause.setOnFinished(event -> {
+
+
+                            Interpreter.interpret(finalLine, this, mapCursor, mapCursor.getCursorById(selectedCursorId), mapVariable);
+
+
+                    });
+                    pause.play();
+                    index++;
+                }
+                catch (RuntimeException e){
+                    addHistory(e.getMessage() + "Line : "+numLine,Color.RED);
+                    stop=true;
+                }
             }
         }
     }
