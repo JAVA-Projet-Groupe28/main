@@ -337,16 +337,22 @@ public class Interpreter {
      * The coordinates as integers, a cursor ID as an integer or the abscissa and ordinate in percentages of the canvas.
      * @param mapCursor The Map of cursors is needed when the selected cursor is asked to look at another cursor.
      */
+
+    //Commande de test : CURSOR 1; CURSOR 2;SELECT 2;POS 80% 10%;CURSOR 3;SELECT 3;POS 10% 10%;CURSOR 4;SELECT 4;POS 20% 50%
     private static void executeLookAt(String[] tokens, Interface interfaceInstance, MapCursor mapCursor, Cursor cursor) {
         try {
             if (tokens.length == 2) {
+                //System.out.println("indice de curseur à viser : "+Integer.parseInt(tokens[1]));
                 Cursor cursorToLookAt = mapCursor.getCursorById(Integer.parseInt(tokens[1]));
 
                 cursor.lookAt(cursorToLookAt);
             } else if (tokens.length == 3) {
                 if (tokens[1].endsWith("%") && tokens[2].endsWith("%")) {
                     double canvasHeight = interfaceInstance.getDrawingPaneHeight();
+                    //System.out.println("hauteur : "+canvasHeight);
                     double canvasWidth = interfaceInstance.getDrawingPaneWidth();
+                    //System.out.println("largeur : "+canvasWidth);
+
                     Percentage abscissa_per = new Percentage(tokens[1]);
                     Percentage ordinate_per = new Percentage(tokens[2]);
 
