@@ -1,5 +1,10 @@
 package com.example.appproject;
 
+/**
+ * This Class is used to create variables.
+ * They are identified by their name.
+ */
+
 public class Variable {
     //TODO : documentation
 
@@ -19,9 +24,19 @@ public class Variable {
     */
     String id;
 
+    /**
+     * This constructor creates a variable.
+     *
+     * @param id the name given to the variable.
+     */
     public Variable(String id) {
         this.id = id;}
 
+    /**
+     * The getter
+     *
+     * @return id name of the <i>Variable</i>.
+     */
     public String getVarId() {return this.id;}
 
     /*

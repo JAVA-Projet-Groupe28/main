@@ -43,6 +43,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
@@ -69,7 +70,7 @@
                             <ListView fx:id="cursorListView" layoutX="1397.0" layoutY="25.0" prefHeight="320.0" prefWidth="392.0" />
                         <AnchorPane layoutX="1407.0" layoutY="705.0" prefHeight="246.0" prefWidth="369.0">
                            <children>
-                                  <Button fx:id="deleteCursorsButton" layoutX="233.0" layoutY="59.0" mnemonicParsing="false" onAction="#deleteCursorsButtonClicked" prefHeight="64.0" prefWidth="125.0" text="DELETE" textFill="#ff0101">
+                                  <Button fx:id="deleteCursorsButton" layoutX="234.0" layoutY="27.0" mnemonicParsing="false" onAction="#deleteCursorsButtonClicked" prefHeight="64.0" prefWidth="125.0" text="DELETE" textFill="#ff0101">
                                  <font>
                                     <Font name="Arial" size="22.0" />
                                  </font>
@@ -77,12 +78,12 @@
                                     <Cursor fx:constant="HAND" />
                                  </cursor>
                               </Button>
-                              <ColorPicker fx:id="colorPicker" layoutX="11.0" layoutY="23.0">
+                              <ColorPicker fx:id="colorPicker" layoutX="11.0" layoutY="2.0">
                                  <cursor>
                                     <Cursor fx:constant="HAND" />
                                  </cursor>
                               </ColorPicker>
-                              <Button layoutX="11.0" layoutY="59.0" mnemonicParsing="false" onAction="#scan" prefHeight="64.0" prefWidth="125.0" text="RUN">
+                              <Button layoutX="11.0" layoutY="27.0" mnemonicParsing="false" onAction="#scan" prefHeight="64.0" prefWidth="125.0" text="RUN">
                                  <cursor>
                                     <Cursor fx:constant="HAND" />
                                  </cursor>
@@ -90,17 +91,31 @@
                                     <Font size="22.0" />
                                  </font>
                               </Button>
-                              <Slider fx:id="sliderTime" layoutX="83.0" layoutY="123.0" majorTickUnit="200.0" max="2000.0" minorTickCount="0" onDragDetected="#setExecuteTime" prefHeight="41.0" prefWidth="212.0" />
-                              <Button layoutX="233.0" layoutY="23.0" mnemonicParsing="false" onAction="#setBackground" prefHeight="25.0" prefWidth="125.0" text="BACKGROUND" textAlignment="CENTER">
+                              <Slider fx:id="sliderTime" layoutX="182.0" layoutY="163.0" majorTickUnit="200.0" max="2000.0" minorTickCount="0" onDragDetected="#setExecuteTime" prefHeight="41.0" prefWidth="168.0" />
+                              <Button layoutX="233.0" layoutY="2.0" mnemonicParsing="false" onAction="#setBackground" prefHeight="25.0" prefWidth="125.0" text="BACKGROUND" textAlignment="CENTER">
                                  <cursor>
                                     <Cursor fx:constant="HAND" />
                                  </cursor>
                               </Button>
-                              <CheckBox fx:id="errorsOrNot" layoutX="136.0" layoutY="144.0" mnemonicParsing="false" prefHeight="88.0" prefWidth="170.0" selected="true" text="ignore errors" textAlignment="CENTER">
+                              <CheckBox fx:id="errorsOrNot" layoutX="180.0" layoutY="91.0" mnemonicParsing="false" prefHeight="72.0" prefWidth="179.0" selected="true" text="ignore errors" textAlignment="CENTER">
                                  <font>
                                     <Font size="20.0" />
                                  </font>
+                                 <cursor>
+                                    <Cursor fx:constant="HAND" />
+                                 </cursor>
                               </CheckBox>
+                              <Button layoutX="13.0" layoutY="91.0" mnemonicParsing="false" onAction="#stopButton" prefHeight="129.0" prefWidth="121.0" style="-fx-background-color: #FF0000;" text="STOP" textFill="WHITE">
+                                 <font>
+                                    <Font name="Arial Bold" size="22.0" />
+                                 </font>
+                                 <cursor>
+                                    <Cursor fx:constant="HAND" />
+                                 </cursor>
+                                 <effect>
+                                    <DropShadow height="6.34" radius="3.405" spread="0.7" width="9.28" />
+                                 </effect>
+                              </Button>
                            </children>
                         </AnchorPane>
                         <ScrollPane fx:id="historyScrollPane" layoutX="1396.0" layoutY="343.0" prefHeight="353.0" prefWidth="392.0">

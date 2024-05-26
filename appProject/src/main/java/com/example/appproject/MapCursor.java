@@ -19,6 +19,7 @@ public class MapCursor {
 
     /**
      * Method to add a new cursor to the Map, with the selected id.
+     *
      * @param cursor
      */
     public void addCursor(Cursor cursor) {
@@ -27,7 +28,8 @@ public class MapCursor {
 
     /**
      * Deletes the cursor corresponding to id.
-     * @param id Key of the cursor in the Map
+     *
+     * @param id the id of the cursor in the Map
      */
     public void removeCursor(int id) {
         this.cursorMap.remove(id);
@@ -38,8 +40,9 @@ public class MapCursor {
 
     /**
      * Returns the Cursor object designated by its id.
-     * @param id
-     * @return
+     *
+     * @param id of the given cursor
+     * @return the cursor linked to <i>id</i>
      */
     public Cursor getCursorById(int id) {
         return this.cursorMap.get(id); // Returns null if no cursor is matching the id
@@ -47,7 +50,8 @@ public class MapCursor {
 
     /**
      * Returns the List of all cursors in the Map
-     * @return
+     *
+     * @return a list with all cursors contained in the Map.
      */
     public List<Cursor> getAllCursors() {
         return new ArrayList<>(this.cursorMap.values());
@@ -55,6 +59,7 @@ public class MapCursor {
 
     /**
      * The method is used to know the smallest unused Key of the Map.
+     *
      * @return the smallest available CursorId/Key.
      */
     public int smallestAvailableId() {
@@ -68,7 +73,7 @@ public class MapCursor {
 
 
     /**
-     * Clear all cursors from the Map
+     * Clears all cursors from the Map.
      */
     public void clearCursors() {
         cursorMap.clear();

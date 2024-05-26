@@ -1,5 +1,11 @@
 package com.example.appproject;
 
+
+/**
+ * Str Class inherits from Variable class.
+ * This Class is used to create string variables.
+ */
+
 public class Str extends Variable {
 
     String value;

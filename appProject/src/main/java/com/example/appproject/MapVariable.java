@@ -4,7 +4,7 @@ import java.util.*;
 import java.lang.*;
 
 /**
- * MapVariable is used to stock in a HashMap and manage all the variables created.
+ * <b><i>MapVariable</i></b> is used to stock in a HashMap and manage all the variables created.
  */
 public class MapVariable {
     //TODO : documentation
@@ -20,7 +20,8 @@ public class MapVariable {
 
     /**
      * Method to add a new variable to the Map.
-     * @param var
+     *
+     * @param var the given variable to add
      */
     public void addVariable(Variable var) {
         this.varMap.put(var.getVarId(), var);
@@ -29,7 +30,8 @@ public class MapVariable {
 
     /**
      * Deletes the variable corresponding to name.
-     * @param name Key of the variable in the Map
+     *
+     * @param name the name of the variable in the Map
      */
     //TODO : check
     //TODO ; exception
@@ -41,8 +43,9 @@ public class MapVariable {
     }
 
     /**
-     * Returns the List of all variables in the Map
-     * @return
+     * Returns the List of all variables in the Map.
+     *
+     * @return varMap
      */
     public Map<String, Variable> getVariableMap() {
         return this.varMap;
@@ -51,6 +54,7 @@ public class MapVariable {
 
     /**
      * Returns the Variable object designated by its name.
+     *
      * @param name
      * @return
      */
@@ -59,15 +63,14 @@ public class MapVariable {
     }
 
     /**
-     * Returns a List of all values contained in the Map.
-     * @return
+     * @return varMap.values() a list with all variables contained in the Map.
      */
     public List<Variable> getAllValues() {
         return new ArrayList<>(this.varMap.values());
     }
 
     /**
-     * Delete the Map.
+     * Deletes the Map.
      */
     public void clearVariables() {
         varMap.clear();
@@ -75,8 +78,9 @@ public class MapVariable {
 
     /**
      * Returns true if a variable named as "varName" already exists in the Map.
-     * @param varName
-     * @return
+     *
+     * @param varName the name of the given <i>Variable</i>.
+     * @return indicates if the variable exists.
      */
     public boolean containsKey(String varName) {
          return (varMap.containsKey(varName));
